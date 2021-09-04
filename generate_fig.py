@@ -3,7 +3,7 @@
 """
 @author: borjangeshkovski
 """
-##-------------#
+##--------------#
 import torch
 device = torch.device('cpu')
 from torch.utils.data import DataLoader
