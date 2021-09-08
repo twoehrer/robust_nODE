@@ -25,7 +25,7 @@ for inputs, targets in dataloader_viz:
 ##--------------#
 ## Setup:
 hidden_dim, data_dim = 2, 2
-T, num_steps = 5.0, 5
+T, num_steps = 5.0, 10
 dt = T/num_steps
 turnpike = False
 bound = 0.
@@ -60,7 +60,7 @@ plt_norm_state(anode, inputs, timesteps=num_steps)
 plt_train_error(anode, inputs, targets, timesteps=num_steps)
 feature_plot(feature_history, targets)
 plt_classifier(anode, num_steps=1500)
-#trajectory_gif(anode, inputs, targets, timesteps=num_steps)
+trajectory_gif(anode, inputs, targets, timesteps=num_steps)
 # ##--------------#
 ## Saving the weights:
 # pars = []
