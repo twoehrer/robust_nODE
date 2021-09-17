@@ -80,7 +80,7 @@ class Dynamics(nn.Module):
             out = out.matmul(w2_t.t())
         return out
 
-class Semiflow(nn.Module):
+class Semiflow(nn.Module):  #this is what matters
     """
     Given the dynamics f, generate the semiflow by solving x'(t) = f(u(t), x(t)).
     We concentrate on the forward Euler method - the user may change this by using
@@ -92,7 +92,7 @@ class Semiflow(nn.Module):
     """
     def __init__(self, device, dynamics, tol=1e-3, adjoint=False, T=10, time_steps=10):
         super(Semiflow, self).__init__()
-        self.adjoint = adjoint
+        self.adjoint = adjoint #here there is already an implementation of adjoint for backwards propagation
         self.device = device
         self.dynamics = dynamics
         self.tol = tol
@@ -115,7 +115,7 @@ class Semiflow(nn.Module):
         else:
             x_aug = x
 
-        if self.adjoint:
+        if self.adjoint:  #maybe here we can compute both at same time, adjoint and normal
             out = odeint_adjoint(self.dynamics, x_aug, integration_time, method='euler', options={'step_size': dt})
         else:
             out = odeint(self.dynamics, x_aug, integration_time, method='euler', options={'step_size': dt})

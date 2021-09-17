@@ -23,7 +23,7 @@ class ResidualBlock(nn.Module):
 
     def forward(self, x):
         return x + self.mlp(x)
-
+#currently designed for images because there is vector conversion
 class ResNet(nn.Module):
     """
     Returns the discrete ResNet semiflow x\mapsto\Phi(x), where
@@ -45,19 +45,19 @@ class ResNet(nn.Module):
 
         traj = []
         traj.append(self.residual_blocks[0](x.view(x.size(0),-1)))      # to store the states/features over layers
-        if self.is_img:
-            for k in range(1, self.num_layers):
-                traj.append(self.residual_blocks[k](traj[k-1]))
-            features = self.residual_blocks(x.view(x.size(0), -1))
-        else:
-            features = self.residual_blocks(x)
+       
+        for k in range(1, self.num_layers):
+            traj.append(self.residual_blocks[k](traj[k-1]))
+        features = self.residual_blocks(x.view(x.size(0), -1)) #remove x.view... to not have a vector (also above)
+        # else:
+        #     features = self.residual_blocks(x)
         
         pred = self.linear_layer(features)
         _traj = [self.linear_layer(_) for _ in traj]
                 
         if return_features:
             return features, pred
-        return pred, _traj, traj
+        return pred, _traj, traj  #traj should be the right one   ADD: return of adj_traj
 
     @property
     def hidden_dim(self):

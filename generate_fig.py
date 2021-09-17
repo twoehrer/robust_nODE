@@ -39,10 +39,10 @@ else:
 
 anode = NeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity='relu', 
                     architecture='bottleneck', T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
-optimizer_anode = torch.optim.Adam(anode.parameters(), lr=1e-3, weight_decay=weight_decay)
+optimizer_anode = torch.optim.Adam(anode.parameters(), lr=1e-3, weight_decay=weight_decay) #weight decay parameter modifies norm
 trainer_anode = Trainer(anode, optimizer_anode, device, cross_entropy=cross_entropy, 
                         turnpike=turnpike, bound=bound, fixed_projector=fp)
-num_epochs = 50
+num_epochs = 50 #number of optimization epochs for gradient decent (?) lower number means worse optimization
 visualize_features = True
 
 import time
@@ -59,7 +59,7 @@ print("--- %s seconds ---" % (time.time() - start_time))
 plt_norm_state(anode, inputs, timesteps=num_steps)
 plt_train_error(anode, inputs, targets, timesteps=num_steps)
 feature_plot(feature_history, targets)
-plt_classifier(anode, num_steps=1500)
+plt_classifier(anode, num_steps=10)  #numsteps defines the amount of pictures created for the gif
 trajectory_gif(anode, inputs, targets, timesteps=num_steps)
 # ##--------------#
 ## Saving the weights:

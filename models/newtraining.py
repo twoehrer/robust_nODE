@@ -76,31 +76,19 @@ class Trainer():
                 dt = T/time_steps
             else:
                 # In ResNet, dt=1=T/N_layers.
-                y_pred, traj, _ = self.model(x_batch)
+                y_pred, traj, _ = self.model(x_batch) #need to define the adj state in self.model
                 time_steps = self.model.num_layers
                 T = time_steps
                 dt = 1 
 
             if not self.turnpike:                                       ## Classical empirical risk minimization
-                loss = self.loss_func(y_pred, y_batch)
+                loss = self.loss_func(y_pred, y_batch) #implement the adjoint term
             else:                                                       ## Augmented empirical risk minimization
-                if self.threshold>0: # l1 controls
-                    l1_regularization = 0.
-                    for param in self.model.parameters():
-                        l1_regularization += param.abs().sum()
-                    ## lambda = 5*1e-3 for spheres+inside
-                    loss = 1.5*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) 
-                                    for k in range(time_steps-1)]) + 0.005*l1_regularization
-                else: #l2 controls
-                    if self.fixed_projector: #maybe not needed
-                        xd = torch.tensor([[6.0/0.8156, 0.5/(2*0.4525)] if x==1 else [-6.0/0.8156, -2.0/(2*0.4525)] for x in y_batch])
-                        loss = self.loss_func(y_pred, y_batch.float())+sum([self.loss_func(traj[k], xd)
-                                            +self.loss_func(traj[k+1], xd) for k in range(time_steps-1)])
-                    else:
-                        ## beta=1.5 for point clouds, trapizoidal rule to integrate
-                        beta = 1.75                      
-                        loss = beta*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) 
-                                        for k in range(time_steps-1)])
+    
+                ## beta=1.5 for point clouds, trapizoidal rule to integrate
+                beta = 1.75                      
+                loss = beta*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) 
+                                for k in range(time_steps-1)])
             loss.backward()
             self.optimizer.step()
             
@@ -155,24 +143,3 @@ class Trainer():
 
         return epoch_loss / len(data_loader)
 
-class WeightClipper(object):
-    """
-    $L^\infty$ constraint, only required if we work with L1-regularization.
-    We normalize the weights by dividing by the threshold once the constraint 
-    is saturated.
-    """
-    def __init__(self, threshold, frequency=1):
-        self.frequency = frequency
-        self.threshold = threshold
-
-    def __call__(self, module):
-        if hasattr(module, 'weight') or hasattr(module, 'bias'):
-            w = module.weight.data
-            b = module.bias.data
-
-            ctrl_norm = w.abs().sum() + b.abs().sum()
-            if ctrl_norm > self.threshold:
-                w = w*(self.threshold/ctrl_norm)
-                b = b*(self.threshold/ctrl_norm)
-                module.weight.data = w
-                module.bias.data = b
