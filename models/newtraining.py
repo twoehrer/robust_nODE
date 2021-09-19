@@ -82,11 +82,11 @@ class Trainer():
                 dt = 1 
 
             if not self.turnpike:                                       ## Classical empirical risk minimization
-                loss = self.loss_func(y_pred, y_batch) #implement the adjoint term
+                loss = self.loss_func(y_pred, y_batch) #implement the adjoint term + sum(adj_traj[-1]**2)
             else:                                                       ## Augmented empirical risk minimization
     
-                ## beta=1.5 for point clouds, trapizoidal rule to integrate
-                beta = 1.75                      
+                ## beta=1.5 for point clouds, 
+                beta = 1.75       #trapizoidal rule to integrate               
                 loss = beta*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) 
                                 for k in range(time_steps-1)])
             loss.backward()
