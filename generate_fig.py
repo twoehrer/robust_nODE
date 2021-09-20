@@ -11,6 +11,7 @@ from plots.gifs import trajectory_gif
 from plots.plots import get_feature_history, plt_train_error, plt_norm_state, plt_norm_control, plt_classifier, feature_plot, plt_dataset
 from models.training import Trainer
 from models.neural_odes import NeuralODE
+from models.resnets import ResNet
 import pickle
 
 ##--------------#
@@ -37,13 +38,17 @@ if turnpike:
 else: 
     weight_decay = dt*0.01          #0.01 for fp, 0.1 else
 
-anode = NeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity='relu', 
-                    architecture='bottleneck', T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
+anode = NeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity='sigmoid', 
+                    architecture='inside', T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
+
+
+# anode = ResNet(data_dim, hidden_dim, num_steps) #this is a try
+
 optimizer_anode = torch.optim.Adam(anode.parameters(), lr=1e-3, weight_decay=weight_decay) #weight decay parameter modifies norm
 trainer_anode = Trainer(anode, optimizer_anode, device, cross_entropy=cross_entropy, 
                         turnpike=turnpike, bound=bound, fixed_projector=fp)
 num_epochs = 50 #number of optimization epochs for gradient decent (?) lower number means worse optimization
-visualize_features = True
+visualize_features = True #changed
 
 import time
 start_time = time.time()
