@@ -44,11 +44,11 @@ class ResNet(nn.Module):
     def forward(self, x, return_features=False):
 
         traj = []
-        traj.append(self.residual_blocks[0](x.view(x.size(0),-1)))      # to store the states/features over layers
+        traj.append(self.residual_blocks[0](x))      # to store the states/features over layers #changed  x.view(x.size(0),-1) to x
        
         for k in range(1, self.num_layers):
             traj.append(self.residual_blocks[k](traj[k-1]))
-        features = self.residual_blocks(x.view(x.size(0), -1)) #remove x.view... to not have a vector was done for image classification(also above)
+        features = self.residual_blocks(x) #changed .view(x.size(0),-1) to x to not have a vector was done for image classification(also above)
         # else:
         #     features = self.residual_blocks(x)
         
