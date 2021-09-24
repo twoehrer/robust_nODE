@@ -21,6 +21,7 @@ class Dynamics(nn.Module):
     """
     The nonlinear, right hand side $f(u(t), x(t)) of the neural ODE.
     We distinguish the different structures defined in the dictionary "architectures" just above.
+    [w(t),b(t)] is saved in self.fc2_time[2].weight and self.fc2_time[2].bias
     """
     def __init__(self, device, data_dim, hidden_dim, augment_dim=0, 
                 non_linearity='tanh', architecture='inside', T=10, time_steps=10):
@@ -42,7 +43,7 @@ class Dynamics(nn.Module):
         if self.architecture > 0:
             ##-- R^{d_aug} -> R^{d_hid} layer -- 
             blocks1 = [nn.Linear(self.input_dim, hidden_dim) for _ in range(self.time_steps)]
-            self.fc1_time = nn.Sequential(*blocks1)
+            self.fc1_time = nn.Sequential(*blocks1) #this does not represent multiple layers with non-linearities but the different discrete points in time of the weight and bias function.
             ##-- R^{d_hid} -> R^{d_aug} layer --
             blocks3 = [nn.Linear(hidden_dim, self.input_dim) for _ in range(self.time_steps)]
             self.fc3_time = nn.Sequential(*blocks3)
