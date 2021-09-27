@@ -7,6 +7,14 @@
 import torch
 import torch.nn as nn
 from torchdiffeq import odeint, odeint_adjoint
+
+#odeint Returns:
+#         y: Tensor, where the first dimension corresponds to different
+#             time points. Contains the solved value of y for each desired time point in
+#             `t`, with the initial value `y0` being the first element along the first
+#             dimension.
+
+
 MAX_NUM_STEPS = 1000
 
 # Useful dicos:
@@ -21,7 +29,6 @@ class Dynamics(nn.Module):
     """
     The nonlinear, right hand side $f(u(t), x(t)) of the neural ODE.
     We distinguish the different structures defined in the dictionary "architectures" just above.
-    [w(t),b(t)] is saved in self.fc2_time[2].weight and self.fc2_time[2].bias
     """
     def __init__(self, device, data_dim, hidden_dim, augment_dim=0, 
                 non_linearity='tanh', architecture='inside', T=10, time_steps=10):
@@ -91,7 +98,7 @@ class Semiflow(nn.Module):  #this is what matters
     - dynamics denotes the instance of the class Dynamics, defining the dynamics f(x,u)
     ***
     """
-    def __init__(self, device, dynamics, tol=1e-3, adjoint=False, T=10, time_steps=10):
+    def __init__(self, device, dynamics, adj_dynamics, tol=1e-3, adjoint=False, T=10, time_steps=10):
         super(Semiflow, self).__init__()
         self.adjoint = adjoint #here there is already an implementation of adjoint for backwards propagation
         self.device = device
@@ -100,6 +107,9 @@ class Semiflow(nn.Module):  #this is what matters
         self.T = T
         self.time_steps = time_steps
         
+        self.adj_dynamics = adj_dynamics
+
+
     def forward(self, x, eval_times=None):
     
         dt = self.T/self.time_steps
@@ -120,10 +130,11 @@ class Semiflow(nn.Module):  #this is what matters
             out = odeint_adjoint(self.dynamics, x_aug, integration_time, method='euler', options={'step_size': dt})
         else:
             out = odeint(self.dynamics, x_aug, integration_time, method='euler', options={'step_size': dt})
+            adj_out = odeint(self.adj_dynamics, x_aug, torch.flip(integration_time,[0]))
         if eval_times is None:
             return out[1] 
         else:
-            return out
+            return out, adj_out
 
     def trajectory(self, x, timesteps):
         integration_time = torch.linspace(0., self.T, timesteps)
@@ -172,7 +183,7 @@ class NeuralODE(nn.Module):
         
         features = self.flow(x)
 
-        if self.fixed_projector: 
+        if self.fixed_projector: #currently fixed_projector = fp
             import pickle
             with open('text.txt', 'rb') as fp:
                 projector = pickle.load(fp)
