@@ -6,7 +6,7 @@
 import torch
 import torch.nn as nn
 from torchdiffeq import odeint, odeint_adjoint
-from custom_nonlinear import tanh_prime
+from models.custom_nonlinear import tanh_prime
 MAX_NUM_STEPS = 1000
 
 # Useful dicos:
@@ -42,7 +42,7 @@ class adj_Dynamics(nn.Module):
         blocks1 = [nn.Linear(self.input_dim, hidden_dim) for _ in range(self.time_steps)]
         self.fc1_time = nn.Sequential(*blocks1)
             
-    def forward(self, t, x=dummy_x):
+    def forward(self, t, p, x=dummy_x):
         """
         The output of the class -> t mapsto f(x(t), u(t)) where t is a number.
         """
@@ -59,7 +59,7 @@ class adj_Dynamics(nn.Module):
         out = self.non_linearity(out) #this should have dimension d
         out = torch.diag(out) #this should make a diagonal d times d matrix out of it
         out = out.matmul(w_t.t()) #prime_simga matrix times weights
-        out = - out
+        out = - out.matmul(p) # -Dxf(u,x) * p .... p is the variable, x is fixed, we need to solve for p
 
         
         return out

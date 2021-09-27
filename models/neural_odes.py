@@ -7,7 +7,7 @@
 import torch
 import torch.nn as nn
 from torchdiffeq import odeint, odeint_adjoint
-from adjoint_neural_ode import adj_Dynamics
+from models.adjoint_neural_ode import adj_Dynamics
 
 #odeint Returns:
 #         y: Tensor, where the first dimension corresponds to different
@@ -111,7 +111,7 @@ class Semiflow(nn.Module):  #this is what matters
         self.adj_dynamics = adj_dynamics
 
 
-    def forward(self, x, eval_times=None):
+    def forward(self, x, eval_times=None): #i probably need to add a p argument here
     
         dt = self.T/self.time_steps
 
@@ -131,7 +131,7 @@ class Semiflow(nn.Module):  #this is what matters
             out = odeint_adjoint(self.dynamics, x_aug, integration_time, method='euler', options={'step_size': dt})
         else:
             out = odeint(self.dynamics, x_aug, integration_time, method='euler', options={'step_size': dt})
-            adj_out = odeint(self.adj_dynamics, x_aug, torch.flip(integration_time,[0]), method='euler', options={'step_size': dt}) #this is new for the adjoint
+            adj_out = odeint(self.adj_dynamics, torch.eye(x.shape[0]), torch.flip(integration_time,[0]), method='euler', options={'step_size': dt}) #this is new for the adjoint
         if eval_times is None:
             return out[1] 
         else:
