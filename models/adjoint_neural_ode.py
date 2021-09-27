@@ -44,7 +44,7 @@ class adj_Dynamics(nn.Module):
             
     def forward(self, t, x=dummy_x):
         """
-        The output of the class -> f(x(t), u(t)).
+        The output of the class -> t mapsto f(x(t), u(t)) where t is a number.
         """
         dt = self.T/self.time_steps
         k = int(t/dt)

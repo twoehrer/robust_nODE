@@ -7,6 +7,7 @@
 import torch
 import torch.nn as nn
 from torchdiffeq import odeint, odeint_adjoint
+from adjoint_neural_ode import adj_Dynamics
 
 #odeint Returns:
 #         y: Tensor, where the first dimension corresponds to different
@@ -130,7 +131,7 @@ class Semiflow(nn.Module):  #this is what matters
             out = odeint_adjoint(self.dynamics, x_aug, integration_time, method='euler', options={'step_size': dt})
         else:
             out = odeint(self.dynamics, x_aug, integration_time, method='euler', options={'step_size': dt})
-            adj_out = odeint(self.adj_dynamics, x_aug, torch.flip(integration_time,[0]))
+            adj_out = odeint(self.adj_dynamics, x_aug, torch.flip(integration_time,[0]), method='euler', options={'step_size': dt}) #this is new for the adjoint
         if eval_times is None:
             return out[1] 
         else:
@@ -174,7 +175,8 @@ class NeuralODE(nn.Module):
         self.fixed_projector = fixed_projector
 
         dynamics = Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps)
-        self.flow = Semiflow(device, dynamics, tol, adjoint, T,  time_steps)
+        adj_dynamics = adj_Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps)
+        self.flow, self.adj_flow = Semiflow(device, dynamics, adj_dynamics, tol, adjoint, T,  time_steps)
         self.linear_layer = nn.Linear(self.flow.dynamics.input_dim,
                                          self.output_dim)
         self.non_linearity = nn.Tanh()
