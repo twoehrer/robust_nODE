@@ -38,8 +38,8 @@ if turnpike:
 else: 
     weight_decay = dt*0.01          #0.01 for fp, 0.1 else
 
-anode = NeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity='sigmoid', 
-                    architecture='bottleneck', T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
+anode = NeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity='tanh', 
+                    architecture='inside', T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
 
 
 # anode = ResNet(data_dim, hidden_dim, num_steps) #this is a try

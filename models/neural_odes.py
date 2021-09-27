@@ -179,7 +179,7 @@ class NeuralODE(nn.Module):
         self.flow, self.adj_flow = Semiflow(device, dynamics, adj_dynamics, tol, adjoint, T,  time_steps)
         self.linear_layer = nn.Linear(self.flow.dynamics.input_dim,
                                          self.output_dim)
-        self.non_linearity = nn.Tanh()
+        self.non_linearity = nn.Tanh() #not really sure why this is here
         
     def forward(self, x, return_features=False):
         
