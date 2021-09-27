@@ -12,6 +12,12 @@ MAX_NUM_STEPS = 1000
 # Useful dicos:
 activations = {'tanh_prime': 1-nn.Tanh()**2 }
 
+#dummy x, needs to be replaced with trajectory of solution of dot(x) = f(u(t),x(t))
+
+
+x_blocks = [nn.Linear(2, 2) for _ in range(10)]
+dummy_x = nn.Sequential(*x_blocks)
+
 class adj_Dynamics(nn.Module):
     """
     Structure of the nonlinear, right hand side $f(u(t), x(t)) of the neural ODE.
@@ -36,7 +42,7 @@ class adj_Dynamics(nn.Module):
         blocks1 = [nn.Linear(self.input_dim, hidden_dim) for _ in range(self.time_steps)]
         self.fc1_time = nn.Sequential(*blocks1)
             
-    def forward(self, t, x_traj):
+    def forward(self, t, x=dummy_x):
         """
         The output of the class -> f(x(t), u(t)).
         """
@@ -47,15 +53,14 @@ class adj_Dynamics(nn.Module):
         w_t = self.fc1_time[k].weight
         b_t = self.fc1_time[k].bias
         
-                                      
-          
         out = x.matmul(w_t.t())+b_t
+        out = self.non_linearity(out)
 
                                                         # w1(t)\sigma(w2(t)x(t)+b2(t))+b1(t)
-        w1_t = self.fc1_time[k].weight
-        b1_t = self.fc1_time[k].bias
-        w2_t = self.fc3_time[k].weight
-        b2_t = self.fc3_time[k].bias
+        # w1_t = self.fc1_time[k].weight
+        # b1_t = self.fc1_time[k].bias
+        # w2_t = self.fc3_time[k].weight
+        # b2_t = self.fc3_time[k].bias
         #out = self.non_linearity(x.matmul(w1_t.t()) + b1_t)
         #out = out.matmul(w2_t.t()) + b2_t
         
