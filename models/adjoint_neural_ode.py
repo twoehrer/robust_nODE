@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-@author: borjangeshkovski (adapted from https://github.com/EmilienDupont/augmented-neural-odes)
-"""
+
+
 ##------------#
 import torch
 import torch.nn as nn
 from torchdiffeq import odeint, odeint_adjoint
+from custom_nonlinear import tanh_prime
 MAX_NUM_STEPS = 1000
 
 # Useful dicos:
-activations = {'tanh_prime': 1-nn.Tanh()**2 }
+activations = {'tanh_prime': tanh_prime }
 
 #dummy x, needs to be replaced with trajectory of solution of dot(x) = f(u(t),x(t))
 
-
-x_blocks = [nn.Linear(2, 2) for _ in range(10)]
-dummy_x = nn.Sequential(*x_blocks)
+time_steps = 10
+data_dim = 2
+dummy_x = torch.ones([time_steps, data_dim])
 
 class adj_Dynamics(nn.Module):
     """
@@ -54,7 +54,10 @@ class adj_Dynamics(nn.Module):
         b_t = self.fc1_time[k].bias
         
         out = x.matmul(w_t.t())+b_t
-        out = self.non_linearity(out)
+        out = self.non_linearity(out) #this should have dimension d
+        out = torch.diag(out) #this should make a diagonal d times d matrix out of it
+        out = out.matmul(w_t.t()) #prime_simga matrix times weights
+
 
                                                         # w1(t)\sigma(w2(t)x(t)+b2(t))+b1(t)
         # w1_t = self.fc1_time[k].weight

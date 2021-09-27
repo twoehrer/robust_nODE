@@ -1,17 +1,24 @@
-# simply define a silu function
-def silu(input):
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import torch
+import torch.nn as nn
+from torchdiffeq import odeint, odeint_adjoint
+
+# simply define a function
+def tanh_prime(input):
     '''
     Applies the Sigmoid Linear Unit (SiLU) function element-wise:
         SiLU(x) = x * sigmoid(x)
     '''
-    return input * torch.sigmoid(input) # use torch.sigmoid to make sure that we created the most efficient implemetation based on builtin PyTorch functions
+    return 1 - torch.tanh(input) * torch.tanh(input) # use torch.sigmoid to make sure that we created the most efficient implemetation based on builtin PyTorch functions
 
 # create a class wrapper from PyTorch nn.Module, so
 # the function now can be easily used in models
-class SiLU(nn.Module):
+class Tanh_Prime(nn.Module):
     '''
-    Applies the Sigmoid Linear Unit (SiLU) function element-wise:
-        SiLU(x) = x * sigmoid(x)
+    Applies tanh'(x) function element-wise:
+        
     Shape:
         - Input: (N, *) where * means, any number of additional
           dimensions
@@ -34,7 +41,7 @@ class SiLU(nn.Module):
         '''
         Forward pass of the function.
         '''
-        return silu(input) # simply apply already implemented SiLU
+        return tanh_prime(input) # simply apply already implemented SiLU
 
 
 
