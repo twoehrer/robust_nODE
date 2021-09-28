@@ -227,7 +227,7 @@ class Semiflow(nn.Module):  #this is what matters
             adj_out = odeint(self.adj_dynamics, torch.eye(x.shape[0]), torch.flip(integration_time,[0]), method='euler', options={'step_size': dt}) #this is new for the adjoint
             print(out.type())
         if eval_times is None:
-            return out[1] 
+            return out[1], adj_out[1] 
         else:
             return out, adj_out
 
