@@ -7,7 +7,7 @@
 import torch
 import torch.nn as nn
 from torchdiffeq import odeint, odeint_adjoint
-from models.adjoint_neural_ode import adj_Dynamics
+# from adjoint_neural_ode import adj_Dynamics
 
 #odeint Returns:
 #         y: Tensor, where the first dimension corresponds to different
@@ -18,11 +18,52 @@ from models.adjoint_neural_ode import adj_Dynamics
 
 MAX_NUM_STEPS = 1000
 
+
+
+def tanh_prime(input):
+    '''
+    Applies the Sigmoid Linear Unit (SiLU) function element-wise:
+        SiLU(x) = x * sigmoid(x)
+    '''
+    return 1 - torch.tanh(input) * torch.tanh(input) # use torch.sigmoid to make sure that we created the most efficient implemetation based on builtin PyTorch functions
+
+# create a class wrapper from PyTorch nn.Module, so
+# the function now can be easily used in models
+class Tanh_Prime(nn.Module):
+    '''
+    Applies tanh'(x) function element-wise:
+        
+    Shape:
+        - Input: (N, *) where * means, any number of additional
+          dimensions
+        - Output: (N, *), same shape as the input
+    References:
+        -  Related paper:
+        https://arxiv.org/pdf/1606.08415.pdf
+    Examples:
+        >>> m = silu()
+        >>> input = torch.randn(2)
+        >>> output = m(input)
+    '''
+    def __init__(self):
+        '''
+        Init method.
+        '''
+        super().__init__() # init the base class
+
+    def forward(self, input):
+        '''
+        Forward pass of the function.
+        '''
+        return tanh_prime(input) # simply apply already implemented SiLU
+
+
 # Useful dicos:
 activations = {'tanh': nn.Tanh(),
                 'relu': nn.ReLU(),
                 'sigmoid': nn.Sigmoid(),
-                'leakyrelu': nn.LeakyReLU(negative_slope=0.25, inplace=True)
+                'leakyrelu': nn.LeakyReLU(negative_slope=0.25, inplace=True),
+                'tanh_prime': tanh_prime
 }
 architectures = {'inside': -1, 'outside': 0, 'bottleneck': 1}
 
@@ -89,6 +130,58 @@ class Dynamics(nn.Module):
             out = out.matmul(w2_t.t())
         return out
 
+
+time_steps = 10
+data_dim = 2
+dummy_x = torch.ones([time_steps, data_dim])
+
+
+
+class adj_Dynamics(nn.Module):
+    """
+    Structure of the nonlinear, right hand side $f(u(t), x(t)) of the neural ODE.
+    We distinguish the different structures defined in the dictionary "architectures" just above.
+    """
+    def __init__(self, device, data_dim, hidden_dim, augment_dim=0, non_linearity='tanh_prime', T=10, time_steps=10):
+                    
+        super(adj_Dynamics, self).__init__()
+        self.device = device
+
+        self.data_dim = data_dim
+        self.input_dim = data_dim
+        self.hidden_dim = hidden_dim
+
+   
+        self.non_linearity = activations[non_linearity]
+    
+        self.T = T
+        self.time_steps = time_steps
+        
+       
+        blocks1 = [nn.Linear(self.input_dim, hidden_dim) for _ in range(self.time_steps)]
+        self.fc1_time = nn.Sequential(*blocks1)
+            
+    def forward(self, t, p, x=dummy_x):
+        """
+        The output of the class -> t mapsto f(x(t), u(t)) where t is a number.
+        """
+        dt = self.T/self.time_steps
+        k = int(t/dt)
+
+        
+        w_t = self.fc1_time[k].weight
+        b_t = self.fc1_time[k].bias
+        
+        #calculation of -Dxf(u(t),x(t))
+
+        out = x.matmul(w_t.t())+b_t
+        out = self.non_linearity(out) #this should have dimension d
+        out = torch.diag(out) #this should make a diagonal d times d matrix out of it
+        out = out.matmul(w_t.t()) #prime_simga matrix times weights
+        out = - out.matmul(p) # -Dxf(u,x) * p .... p is the variable, x is fixed, we need to solve for p
+
+        
+        return out
 class Semiflow(nn.Module):  #this is what matters
     """
     Given the dynamics f, generate the semiflow by solving x'(t) = f(u(t), x(t)).
@@ -127,17 +220,18 @@ class Semiflow(nn.Module):  #this is what matters
         else:
             x_aug = x
 
-        if self.adjoint:  #maybe here we can compute both at same time, adjoint and normal
+        if self.adjoint:  
             out = odeint_adjoint(self.dynamics, x_aug, integration_time, method='euler', options={'step_size': dt})
         else:
             out = odeint(self.dynamics, x_aug, integration_time, method='euler', options={'step_size': dt})
             adj_out = odeint(self.adj_dynamics, torch.eye(x.shape[0]), torch.flip(integration_time,[0]), method='euler', options={'step_size': dt}) #this is new for the adjoint
+            print(out.type())
         if eval_times is None:
             return out[1] 
         else:
             return out, adj_out
 
-    def trajectory(self, x, timesteps):
+    def trajectory(self, x, timesteps): #I THINK I HAVE TO ADD THE ADJOINT HERE... ADD ADJOINT TO FORWARD FUNCTIONS
         integration_time = torch.linspace(0., self.T, timesteps)
         return self.forward(x, eval_times=integration_time)
 
@@ -175,15 +269,15 @@ class NeuralODE(nn.Module):
         self.fixed_projector = fixed_projector
 
         dynamics = Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps)
-        adj_dynamics = adj_Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps)
-        self.flow, self.adj_flow = Semiflow(device, dynamics, adj_dynamics, tol, adjoint, T,  time_steps)
+        adj_dynamics = adj_Dynamics(device, data_dim, hidden_dim, augment_dim, 'tanh_prime', self.T, self.time_steps)
+        self.flow = Semiflow(device, dynamics, adj_dynamics, tol, adjoint, T,  time_steps) #, self.adj_flow
         self.linear_layer = nn.Linear(self.flow.dynamics.input_dim,
                                          self.output_dim)
         self.non_linearity = nn.Tanh() #not really sure why this is here
         
     def forward(self, x, return_features=False):
         
-        features = self.flow(x)
+        features, adj_features = self.flow(x)
 
         if self.fixed_projector: #currently fixed_projector = fp
             import pickle
@@ -202,5 +296,8 @@ class NeuralODE(nn.Module):
                 self.proj_traj = self.non_linearity(self.proj_traj)
         
         if return_features:
-            return features, pred
+            return features, adj_features, pred
         return pred, self.proj_traj
+
+
+

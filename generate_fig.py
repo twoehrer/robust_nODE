@@ -42,7 +42,7 @@ else:
 anode = NeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity='tanh', 
                     architecture='inside', T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
 
-
+print("CHECKPOINT ANODE")
 # anode = ResNet(data_dim, hidden_dim, num_steps) #this is a try
 
 optimizer_anode = torch.optim.Adam(anode.parameters(), lr=1e-3, weight_decay=weight_decay) #weight decay parameter modifies norm
