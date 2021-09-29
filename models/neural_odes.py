@@ -139,8 +139,9 @@ dummy_x = torch.ones([time_steps, data_dim])
 
 class adj_Dynamics(nn.Module):
     """
-    Structure of the nonlinear, right hand side $f(u(t), x(t)) of the neural ODE.
-    We distinguish the different structures defined in the dictionary "architectures" just above.
+    Structure of the adjoint dynamics. given nODE dot(x(t)) = f(u(t), x(t)) gives structure for
+    dot(p(t)) = D_xf(u(t),x(t)) * p 
+    currently only sigma(W(t)x(t) + b(t)) architecture with tanh as non_linearity
     """
     def __init__(self, device, data_dim, hidden_dim, augment_dim=0, non_linearity='tanh_prime', T=10, time_steps=10):
                     
@@ -154,23 +155,26 @@ class adj_Dynamics(nn.Module):
    
         self.non_linearity = activations[non_linearity]
     
-        self.T = T
-        self.time_steps = time_steps
+        
         
        
         blocks1 = [nn.Linear(self.input_dim, hidden_dim) for _ in range(self.time_steps)]
         self.fc1_time = nn.Sequential(*blocks1)
             
-    def forward(self, t, p, x=dummy_x):
+    def forward(self, t, p, x, f_dynamics): #i need x at entry x[time_step - k - 1]
         """
-        The output of the class -> t mapsto f(x(t), u(t)) where t is a number.
+        I need to pass the dynamics of f(u(t),.) and solution x(t) into the adjoint dynamics
+        The output of the class -> p mapsto -D_x f(x(T-t), u(T-t))*p where t is a number.
+        the adjoint goes backwards in time
         """
-        dt = self.T/self.time_steps
+        time_steps = f_dynamics.time_steps
+        dt = f_dynamics.T/time_steps
         k = int(t/dt)
 
         
-        w_t = self.fc1_time[k].weight
-        b_t = self.fc1_time[k].bias
+        #we need the backwards time weights
+        w_t = f_dynamics.fc_1_time[time_steps - k - 1].weight 
+        b_t = f_dynamics.fc1_time[time_steps - k - 1].bias
         
         #calculation of -Dxf(u(t),x(t))
 
@@ -182,7 +186,7 @@ class adj_Dynamics(nn.Module):
 
         
         return out
-class Semiflow(nn.Module):  #this is what matters
+class Semiflow(nn.Module):  #this should allow to calculate the flow for dot(x) = f(u,x) and dot(p) = -Dxf(u,x)p
     """
     Given the dynamics f, generate the semiflow by solving x'(t) = f(u(t), x(t)).
     We concentrate on the forward Euler method - the user may change this by using
@@ -192,16 +196,15 @@ class Semiflow(nn.Module):  #this is what matters
     - dynamics denotes the instance of the class Dynamics, defining the dynamics f(x,u)
     ***
     """
-    def __init__(self, device, dynamics, adj_dynamics, tol=1e-3, adjoint=False, T=10, time_steps=10):
+    def __init__(self, device, dynamics, tol=1e-3, adjoint=False, T=10, time_steps=10):
         super(Semiflow, self).__init__()
-        self.adjoint = adjoint #here there is already an implementation of adjoint for backwards propagation
+        self.adjoint = adjoint 
         self.device = device
         self.dynamics = dynamics
         self.tol = tol
         self.T = T
         self.time_steps = time_steps
         
-        self.adj_dynamics = adj_dynamics
 
 
     def forward(self, x, eval_times=None): #i probably need to add a p argument here
@@ -224,14 +227,15 @@ class Semiflow(nn.Module):  #this is what matters
             out = odeint_adjoint(self.dynamics, x_aug, integration_time, method='euler', options={'step_size': dt})
         else:
             out = odeint(self.dynamics, x_aug, integration_time, method='euler', options={'step_size': dt})
-            adj_out = odeint(self.adj_dynamics, torch.eye(x.shape[0]), torch.flip(integration_time,[0]), method='euler', options={'step_size': dt}) #this is new for the adjoint
+            #i need to put the out into the odeint for the adj_out
+            # adj_out = odeint(self.adj_dynamics, torch.eye(x.shape[0]), torch.flip(integration_time,[0]), method='euler', options={'step_size': dt}) #this is new for the adjoint
             print(out.type())
         if eval_times is None:
             return out[1] 
         else:
-            return out, adj_out
+            return out
 
-    def trajectory(self, x, timesteps): #I THINK I HAVE TO ADD THE ADJOINT HERE... ADD ADJOINT TO FORWARD FUNCTIONS
+    def trajectory(self, x, timesteps):
         integration_time = torch.linspace(0., self.T, timesteps)
         return self.forward(x, eval_times=integration_time)
 
@@ -269,15 +273,15 @@ class NeuralODE(nn.Module):
         self.fixed_projector = fixed_projector
 
         dynamics = Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps)
-        adj_dynamics = adj_Dynamics(device, data_dim, hidden_dim, augment_dim, 'tanh_prime', self.T, self.time_steps)
-        self.flow = Semiflow(device, dynamics, adj_dynamics, tol, adjoint, T,  time_steps) #, self.adj_flow
+        
+        self.flow = Semiflow(device, dynamics, tol, adjoint, T,  time_steps) #, self.adj_flow
         self.linear_layer = nn.Linear(self.flow.dynamics.input_dim,
                                          self.output_dim)
         self.non_linearity = nn.Tanh() #not really sure why this is here
         
     def forward(self, x, return_features=False):
         
-        features, adj_features = self.flow(x)
+        features = self.flow(x)
 
         if self.fixed_projector: #currently fixed_projector = fp
             import pickle
@@ -296,8 +300,75 @@ class NeuralODE(nn.Module):
                 self.proj_traj = self.non_linearity(self.proj_traj)
         
         if return_features:
-            return features, adj_features, pred
+            return features, pred
         return pred, self.proj_traj
 
 
+
+class robNeuralODE(nn.Module):
+    """
+    Returns the flowmap of the neural ODE, i.e. x\mapsto\Phi_T(x), 
+    where \Phi_T(x) might be the solution to the neural ODE, or the
+    solution composed with a projection. 
+    
+    ***
+    - output dim is an int the dimension of the labels.
+    - architecture is a string designating the structure of the dynamics f(x,u)
+    - fixed_projector is a boolean indicating whether the output layer is trained or not
+    ***
+    """
+    def __init__(self, device, data_dim, hidden_dim, output_dim=2,
+                 augment_dim=0, non_linearity='tanh',
+                 tol=1e-3, adjoint=False, architecture='inside', 
+                 T=10, time_steps=10, 
+                 cross_entropy=True, fixed_projector=False):
+        super(NeuralODE, self).__init__()
+        self.device = device
+        self.data_dim = data_dim
+        self.hidden_dim = hidden_dim
+        self.augment_dim = augment_dim
+        if output_dim == 1 and cross_entropy: 
+            #output_dim = 1 pour MSE; >=2 pour cross entropy for binary classification.
+            raise ValueError('Incompatible output dimension with loss function.')
+        self.output_dim = output_dim
+        self.tol = tol
+        self.T = T
+        self.time_steps = time_steps
+        self.architecture = architecture
+        self.cross_entropy = cross_entropy
+        self.fixed_projector = fixed_projector
+
+        dynamics = Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps)
+        self.flow = Semiflow(device, dynamics, tol, adjoint, T,  time_steps)
+
+        adj_dynamics = adj_Dynamics(device, data_dim, hidden_dim, augment_dim, 'tanh_prime', self.T, self.time_steps) #i need to get the trajectory of x(t) somehow in the dynamics. how do i do that?
+        self.adj_flow = Semiflow(device, adj_dynamics, tol, adjoint, T,  time_steps)
+
+        self.linear_layer = nn.Linear(self.flow.dynamics.input_dim,
+                                         self.output_dim)
+        self.non_linearity = nn.Tanh() #not really sure why this is here
+        
+    def forward(self, x, return_features=False):
+        
+        features = self.flow(x)
+
+        if self.fixed_projector: #currently fixed_projector = fp
+            import pickle
+            with open('text.txt', 'rb') as fp:
+                projector = pickle.load(fp)
+            pred = features.matmul(projector[-2].t()) + projector[-1]
+            pred = self.non_linearity(pred)
+            self.proj_traj = self.flow.trajectory(x, self.time_steps)
+
+        else:
+            self.traj = self.flow.trajectory(x, self.time_steps)
+            pred = self.linear_layer(features)
+            self.proj_traj = self.linear_layer(self.traj)
+            if not self.cross_entropy:
+                pred = self.non_linearity(pred)
+                self.proj_traj = self.non_linearity(self.proj_traj)
+        
+        if return_features:
+            return features, pred
+        return pred, self.proj_traj
 
