@@ -348,7 +348,7 @@ class robNeuralODE(nn.Module):
         self.f_dynamics = Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps)
         self.flow = Semiflow(device, self.f_dynamics, tol, adjoint, T,  time_steps)
 
-        
+        self.adjoint = adjoint
         
 
         self.linear_layer = nn.Linear(self.flow.dynamics.input_dim,

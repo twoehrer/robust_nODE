@@ -155,6 +155,11 @@ class Trainer():
 
         return epoch_loss / len(data_loader)
 
+
+
+
+
+
 class WeightClipper(object):
     """
     $L^\infty$ constraint, only required if we work with L1-regularization.
