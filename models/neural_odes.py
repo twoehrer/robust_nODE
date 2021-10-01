@@ -111,11 +111,11 @@ class Dynamics(nn.Module):
         if self.architecture < 1:
             w_t = self.fc2_time[k].weight
             b_t = self.fc2_time[k].bias
-            if self.architecture < 0:                               # w(t)\sigma(x(t))+b(t)
+            if self.architecture < 0:                               # w(t)\sigma(x(t))+b(t)  inner
                 out = self.non_linearity(x).matmul(w_t.t()) + b_t        
-            else:                                                   # \sigma(w(t)x(t)+b(t))
+            else:                                                   # \sigma(w(t)x(t)+b(t))   outer
                 out = self.non_linearity(x.matmul(w_t.t())+b_t)
-        else:                                                       # w1(t)\sigma(w2(t)x(t)+b2(t))+b1(t)
+        else:                                                       # w1(t)\sigma(w2(t)x(t)+b2(t))+b1(t) bottle-neck
             w1_t = self.fc1_time[k].weight
             b1_t = self.fc1_time[k].bias
             w2_t = self.fc3_time[k].weight
@@ -131,9 +131,7 @@ class Dynamics(nn.Module):
         return out
 
 
-time_steps = 10
-data_dim = 2
-dummy_x = torch.ones([time_steps, data_dim])
+
 
 
 
@@ -143,39 +141,48 @@ class adj_Dynamics(nn.Module):
     dot(p(t)) = D_xf(u(t),x(t)) * p 
     currently only sigma(W(t)x(t) + b(t)) architecture with tanh as non_linearity
     """
-    def __init__(self, device, data_dim, hidden_dim, augment_dim=0, non_linearity='tanh_prime', T=10, time_steps=10):
+    def __init__(self, dynamics, x_traj, device, data_dim, hidden_dim, architecture='outside', augment_dim=0, non_linearity='tanh_prime', T=10, time_steps=10):
                     
         super(adj_Dynamics, self).__init__()
         self.device = device
 
+        self.augment_dim = augment_dim
         self.data_dim = data_dim
         self.input_dim = data_dim
         self.hidden_dim = hidden_dim
+        self.T = T
 
+        
+        
+
+        if non_linearity not in activations.keys() or architecture not in architectures.keys():
+            raise ValueError("Activation function or architecture not found. Please reconsider.")
+        
+        self.non_linearity = activations[non_linearity]
+        self.architecture = architecture
+        self.T = T
+        self.time_steps = time_steps
    
         self.non_linearity = activations[non_linearity]
-    
-        
-        
-       
-        blocks1 = [nn.Linear(self.input_dim, hidden_dim) for _ in range(self.time_steps)]
-        self.fc1_time = nn.Sequential(*blocks1)
+
+        self.f_dynamics = dynamics
+        self.x_traj = x_traj #traj
             
-    def forward(self, t, p, x, f_dynamics): #i need x at entry x[time_step - k - 1]
+    def forward(self, t, p): #i need x at entry x[time_step - k - 1]
         """
         I need to pass the dynamics of f(u(t),.) and solution x(t) into the adjoint dynamics
         The output of the class -> p mapsto -D_x f(x(T-t), u(T-t))*p where t is a number.
         the adjoint goes backwards in time
         """
-        time_steps = f_dynamics.time_steps
-        dt = f_dynamics.T/time_steps
+        time_steps = self.f_dynamics.time_steps
+        dt = self.T/time_steps
         k = int(t/dt)
 
         
         #we need the backwards time weights
-        w_t = f_dynamics.fc_1_time[time_steps - k - 1].weight 
-        b_t = f_dynamics.fc1_time[time_steps - k - 1].bias
-        
+        w_t = self.f_dynamics.fc2_time[time_steps - k - 1].weight 
+        b_t = self.f_dynamics.fc2_time[time_steps - k - 1].bias
+        x = self.x_traj[time_steps - k - 1]
         #calculation of -Dxf(u(t),x(t))
 
         out = x.matmul(w_t.t())+b_t
@@ -186,7 +193,7 @@ class adj_Dynamics(nn.Module):
 
         
         return out
-class Semiflow(nn.Module):  #this should allow to calculate the flow for dot(x) = f(u,x) and dot(p) = -Dxf(u,x)p
+class Semiflow(nn.Module):  #this should allow to calculate the flow for dot(x) = f(u,x) AND dot(p) = -Dxf(u,x)p
     """
     Given the dynamics f, generate the semiflow by solving x'(t) = f(u(t), x(t)).
     We concentrate on the forward Euler method - the user may change this by using
@@ -338,11 +345,11 @@ class robNeuralODE(nn.Module):
         self.cross_entropy = cross_entropy
         self.fixed_projector = fixed_projector
 
-        dynamics = Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps)
-        self.flow = Semiflow(device, dynamics, tol, adjoint, T,  time_steps)
+        self.f_dynamics = Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps)
+        self.flow = Semiflow(device, self.f_dynamics, tol, adjoint, T,  time_steps)
 
-        adj_dynamics = adj_Dynamics(device, data_dim, hidden_dim, augment_dim, 'tanh_prime', self.T, self.time_steps) #i need to get the trajectory of x(t) somehow in the dynamics. how do i do that?
-        self.adj_flow = Semiflow(device, adj_dynamics, tol, adjoint, T,  time_steps)
+        
+        
 
         self.linear_layer = nn.Linear(self.flow.dynamics.input_dim,
                                          self.output_dim)
@@ -350,6 +357,9 @@ class robNeuralODE(nn.Module):
         
     def forward(self, x, return_features=False):
         
+        # x = vector[0:2]
+        # p = vector[2:4]
+
         features = self.flow(x)
 
         if self.fixed_projector: #currently fixed_projector = fp
@@ -367,8 +377,11 @@ class robNeuralODE(nn.Module):
             if not self.cross_entropy:
                 pred = self.non_linearity(pred)
                 self.proj_traj = self.non_linearity(self.proj_traj)
-        
+        adj_dynamics = adj_Dynamics(self.device, self.x_dynamics, self.proj_traj, 'tanh_prime', self.T, self.time_steps) #i need to get the trajectory of x(t) somehow in the dynamics. how do i do that?
+        self.adj_flow = Semiflow(self.device, adj_dynamics, self.tol, self.adjoint, self.T,  self.time_steps)
+        p = torch.tensor([1.,0.])
+        self.proj_adj_traj = self.adj_flow.trajectory(p, self.time_steps)
         if return_features:
             return features, pred
-        return pred, self.proj_traj
+        return pred, self.proj_traj, self.proj_adj_traj
 
