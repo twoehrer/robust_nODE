@@ -329,7 +329,7 @@ class robNeuralODE(nn.Module):
                  tol=1e-3, adjoint=False, architecture='inside', 
                  T=10, time_steps=10, 
                  cross_entropy=True, fixed_projector=False):
-        super(NeuralODE, self).__init__()
+        super(robNeuralODE, self).__init__()
         self.device = device
         self.data_dim = data_dim
         self.hidden_dim = hidden_dim
@@ -369,15 +369,17 @@ class robNeuralODE(nn.Module):
             pred = features.matmul(projector[-2].t()) + projector[-1]
             pred = self.non_linearity(pred)
             self.proj_traj = self.flow.trajectory(x, self.time_steps)
-
+            print('there is a fixed_proj')
         else:
+            print('there is no fixed_proj')
             self.traj = self.flow.trajectory(x, self.time_steps)
             pred = self.linear_layer(features)
             self.proj_traj = self.linear_layer(self.traj)
             if not self.cross_entropy:
                 pred = self.non_linearity(pred)
                 self.proj_traj = self.non_linearity(self.proj_traj)
-        adj_dynamics = adj_Dynamics(self.device, self.x_dynamics, self.proj_traj, 'tanh_prime', self.T, self.time_steps) #i need to get the trajectory of x(t) somehow in the dynamics. how do i do that?
+        adj_dynamics = adj_Dynamics(self.f_dynamics, self.proj_traj, self.device, self.data_dim, self.hidden_dim) #i need to get the trajectory of x(t) somehow in the dynamics. how do i do that?
+       
         self.adj_flow = Semiflow(self.device, adj_dynamics, self.tol, self.adjoint, self.T,  self.time_steps)
         p = torch.tensor([1.,0.])
         self.proj_adj_traj = self.adj_flow.trajectory(p, self.time_steps)
