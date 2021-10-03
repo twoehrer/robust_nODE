@@ -15,6 +15,8 @@ from models.resnets import ResNet
 import pickle
 
 
+
+
 ##--------------#
 ## Data: 
 with open('data.txt', 'rb') as fp:
@@ -40,7 +42,7 @@ else:
     weight_decay = dt*0.01          #0.01 for fp, 0.1 else
 
 anode = NeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity='tanh', 
-                    architecture='inside', T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
+                    architecture='outside', T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
 
 print("CHECKPOINT ANODE")
 # anode = ResNet(data_dim, hidden_dim, num_steps) #this is a try
@@ -49,7 +51,7 @@ optimizer_anode = torch.optim.Adam(anode.parameters(), lr=1e-3, weight_decay=wei
 trainer_anode = Trainer(anode, optimizer_anode, device, cross_entropy=cross_entropy, 
                         turnpike=turnpike, bound=bound, fixed_projector=fp)
 num_epochs = 50 #number of optimization epochs for gradient decent (?) lower number means worse optimization
-visualize_features = True #changed
+visualize_features = False #changed
 
 import time
 start_time = time.time()
@@ -61,11 +63,11 @@ else:
 print("--- %s seconds ---" % (time.time() - start_time))
 
 ##--------------#
-## Plots:
-plt_norm_state(anode, inputs, timesteps=num_steps)
-plt_train_error(anode, inputs, targets, timesteps=num_steps)
-feature_plot(feature_history, targets)
-plt_classifier(anode, num_steps=10)  #numsteps defines the amount of pictures created for the gif
+# ## Plots:
+# plt_norm_state(anode, inputs, timesteps=num_steps)
+# plt_train_error(anode, inputs, targets, timesteps=num_steps)
+# feature_plot(feature_history, targets)
+# # plt_classifier(anode, num_steps=10)  #numsteps defines the amount of pictures created for the gif
 trajectory_gif(anode, inputs, targets, timesteps=num_steps)
 # ##--------------#
 ## Saving the weights:

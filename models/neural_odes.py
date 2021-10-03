@@ -236,7 +236,7 @@ class Semiflow(nn.Module):  #this should allow to calculate the flow for dot(x) 
             out = odeint(self.dynamics, x_aug, integration_time, method='euler', options={'step_size': dt})
             #i need to put the out into the odeint for the adj_out
             # adj_out = odeint(self.adj_dynamics, torch.eye(x.shape[0]), torch.flip(integration_time,[0]), method='euler', options={'step_size': dt}) #this is new for the adjoint
-            print(out.type())
+            
         if eval_times is None:
             return out[1] 
         else:
@@ -369,9 +369,9 @@ class robNeuralODE(nn.Module):
             pred = features.matmul(projector[-2].t()) + projector[-1]
             pred = self.non_linearity(pred)
             self.proj_traj = self.flow.trajectory(x, self.time_steps)
-            print('there is a fixed_proj')
+            
         else:
-            print('there is no fixed_proj')
+            
             self.traj = self.flow.trajectory(x, self.time_steps)
             pred = self.linear_layer(features)
             self.proj_traj = self.linear_layer(self.traj)
