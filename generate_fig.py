@@ -13,7 +13,7 @@ from models.training import Trainer, robTrainer
 from models.neural_odes import NeuralODE, robNeuralODE
 from models.resnets import ResNet
 import pickle
-
+import sys
 
 
 
@@ -29,12 +29,14 @@ for inputs, targets in dataloader_viz:
 ##--------------#
 ## Setup:
 hidden_dim, data_dim = 2, 2
-T, num_steps = 5.0, 10
+T, num_steps = 5.0, 10  #T is the end time, num_steps are the amount of discretization steps for the ODE solver
 dt = T/num_steps
 turnpike = False
 bound = 0.
 fp = False
 cross_entropy = True
+
+num_epochs = 70 #number of optimization epochs for gradient decent
 
 if turnpike:
     weight_decay = 0 if bound>0. else dt*0.01
@@ -61,7 +63,14 @@ optimizer_rob_node = torch.optim.Adam(rob_node.parameters(), lr=1e-3, weight_dec
 trainer_rob_node = robTrainer(rob_node, optimizer_rob_node, device, cross_entropy=cross_entropy, 
                         turnpike=turnpike, bound=bound, fixed_projector=fp)                        
 
-num_epochs = 70 #number of optimization epochs for gradient decent (?) lower number means worse optimization
+
+print("Model's state_dict:")
+for param_tensor in rob_node.state_dict():
+    print(param_tensor, "\t", rob_node.state_dict()[param_tensor].size())
+
+
+sys.exit()
+
 visualize_features = False #changed
 
 import time
@@ -78,8 +87,11 @@ print("--- %s seconds ---" % (time.time() - start_time))
 # ## Plots:
 # plt_norm_state(anode, inputs, timesteps=num_steps)
 # plt_train_error(anode, inputs, targets, timesteps=num_steps)
+
+# plt_norm_state(rob_node, inputs, timesteps=num_steps)
+# plt_train_error(rob_node, inputs, targets, timesteps=num_steps, filename = 'rob_train_error.pdf')
 # feature_plot(feature_history, targets)
-# # plt_classifier(anode, num_steps=10)  #numsteps defines the amount of pictures created for the gif
+plt_classifier(anode, num_steps=10)  
 trajectory_gif(anode, inputs, targets, timesteps=num_steps, filename = 'standard.gif')
 trajectory_gif(rob_node, inputs, targets, timesteps=num_steps, filename = 'rob.gif')
 # ##--------------#
@@ -93,3 +105,6 @@ trajectory_gif(rob_node, inputs, targets, timesteps=num_steps, filename = 'rob.g
 #    pickle.dump(pars, fp)
 # plt_norm_control(anode)
 # ##--------------#
+
+
+

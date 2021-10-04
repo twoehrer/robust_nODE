@@ -123,6 +123,7 @@ class Trainer():
                     if self.cross_entropy:
                         print("Loss: {:.3f}".format(self.loss_func(traj[-1], y_batch).item()))
                         print("Accuracy: {:.3f}".format((softpred == y_batch).sum().item()/(y_batch.size(0))))
+                       
                     else:
                         print("Loss: {:.3f}".format(self.loss_func(y_pred, y_batch).item()))
                         
@@ -268,6 +269,7 @@ class robTrainer():
                     if self.cross_entropy:
                         print("Loss: {:.3f}".format(self.loss_func(traj[-1], y_batch).item()))
                         print("Accuracy: {:.3f}".format((softpred == y_batch).sum().item()/(y_batch.size(0))))
+                        print("|p(0)|^2: {:.3f}".format(adj_traj[-1].matmul(adj_traj[-1])))
                     else:
                         print("Loss: {:.3f}".format(self.loss_func(y_pred, y_batch).item()))
                         

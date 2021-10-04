@@ -36,8 +36,11 @@ def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
     trajectories = model.flow.trajectory(inputs, timesteps).detach()
     num_dims = trajectories.shape[2]
 
-    x_min, x_max = trajectories[:, :, 0].min(), trajectories[:, :, 0].max()
-    y_min, y_max = trajectories[:, :, 1].min(), trajectories[:, :, 1].max()
+    # x_min, x_max = trajectories[:, :, 0].min(), trajectories[:, :, 0].max()
+    # y_min, y_max = trajectories[:, :, 1].min(), trajectories[:, :, 1].max()
+
+    x_min, x_max = -3, 3  #to normalize for rob and standard nODE
+    y_min, y_max = -3, 3  #
     if num_dims == 3:
         z_min, z_max = trajectories[:, :, 2].min(), trajectories[:, :, 2].max()
     margin = 0.1
