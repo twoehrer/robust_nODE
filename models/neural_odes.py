@@ -381,9 +381,11 @@ class robNeuralODE(nn.Module):
         adj_dynamics = adj_Dynamics(self.f_dynamics, self.proj_traj, self.device, self.data_dim, self.hidden_dim) #i need to get the trajectory of x(t) somehow in the dynamics. how do i do that?
        
         self.adj_flow = Semiflow(self.device, adj_dynamics, self.tol, self.adjoint, self.T,  self.time_steps)
-        p = torch.tensor([1.,0.])
-        self.proj_adj_traj = self.adj_flow.trajectory(p, self.time_steps)
+        p1 = torch.tensor([1.,0.]) #we want to take initial conditions in all canonical directions in to account
+        p2 = torch.tensor([0.,1.])
+        self.proj_adj_traj_p1 = self.adj_flow.trajectory(p1, self.time_steps)
+        self.proj_adj_traj_p2 = self.adj_flow.trajectory(p2, self.time_steps)
         if return_features:
             return features, pred
-        return pred, self.proj_traj, self.proj_adj_traj
+        return pred, self.proj_traj, torch.cat((self.proj_adj_traj_p1, self.proj_adj_traj_p2))
 

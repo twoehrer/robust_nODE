@@ -226,7 +226,8 @@ class robTrainer():
                 dt = 1 
 
             if not self.turnpike:                                       ## Classical empirical risk minimization
-                loss = self.loss_func(y_pred, y_batch) + adj_traj[-1].matmul(adj_traj[-1])
+                loss = self.loss_func(y_pred, y_batch) + 0.5*adj_traj[-1].matmul(adj_traj[-1])
+                
             else:                                                       ## Augmented empirical risk minimization
                 if self.threshold>0: # l1 controls
                     l1_regularization = 0.
