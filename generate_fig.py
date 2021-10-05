@@ -69,7 +69,7 @@ for param_tensor in rob_node.state_dict():
     print(param_tensor, "\t", rob_node.state_dict()[param_tensor].size())
 
 
-sys.exit()
+# sys.exit()
 
 visualize_features = False #changed
 
@@ -91,7 +91,8 @@ print("--- %s seconds ---" % (time.time() - start_time))
 # plt_norm_state(rob_node, inputs, timesteps=num_steps)
 # plt_train_error(rob_node, inputs, targets, timesteps=num_steps, filename = 'rob_train_error.pdf')
 # feature_plot(feature_history, targets)
-plt_classifier(anode, num_steps=10)  
+plt_classifier(anode, num_steps=10) 
+plt_classifier(rob_node, num_steps=10, save_fig = 'rob_generalization.pdf')
 trajectory_gif(anode, inputs, targets, timesteps=num_steps, filename = 'standard.gif')
 trajectory_gif(rob_node, inputs, targets, timesteps=num_steps, filename = 'rob.gif')
 # ##--------------#

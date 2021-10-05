@@ -215,13 +215,15 @@ class robTrainer():
             y_batch = y_batch.to(self.device)
             
             if not self.is_resnet:
-                y_pred, traj, adj_traj = self.model(x_batch)   
+                y_pred, traj  = self.model(x_batch) 
+                adj_traj = torch.cat((self.model.adj_traj_p1, self.model.adj_traj_p2)) #added adj_traj here for output  
                 time_steps = self.model.time_steps 
                 T = self.model.T
                 dt = T/time_steps
             else:
                 # In ResNet, dt=1=T/N_layers.
-                y_pred, traj, adj_traj = self.model(x_batch) #added adj_traj here for output
+                y_pred, traj = self.model(x_batch) 
+                adj_traj = torch.cat((self.model.adj_traj_p1, self.model.adj_traj_p2)) #added adj_traj here for output
                 time_steps = self.model.num_layers
                 T = time_steps
                 dt = 1 
