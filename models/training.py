@@ -229,7 +229,8 @@ class robTrainer():
                 dt = 1 
 
             if not self.turnpike:                                       ## Classical empirical risk minimization
-                loss = self.loss_func(y_pred, y_batch) + 0.5*adj_traj[-1].matmul(adj_traj[-1])
+                loss = self.loss_func(y_pred, y_batch) + 0.3*adj_traj[-1].matmul(adj_traj[-1])
+                # loss = 0.01* adj_traj[-1].matmul(adj_traj[-1])
                 
             else:                                                       ## Augmented empirical risk minimization
                 if self.threshold>0: # l1 controls
@@ -238,17 +239,17 @@ class robTrainer():
                         l1_regularization += param.abs().sum()
                     ## lambda = 5*1e-3 for spheres+inside
                     loss = 1.5*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) 
-                                    for k in range(time_steps-1)]) + 0.005*l1_regularization
+                                    for k in range(time_steps-1)]) + 0.005*l1_regularization + 0.5*adj_traj[-1].matmul(adj_traj[-1])
                 else: #l2 controls
                     if self.fixed_projector: #maybe not needed
                         xd = torch.tensor([[6.0/0.8156, 0.5/(2*0.4525)] if x==1 else [-6.0/0.8156, -2.0/(2*0.4525)] for x in y_batch])
                         loss = self.loss_func(y_pred, y_batch.float())+sum([self.loss_func(traj[k], xd)
-                                            +self.loss_func(traj[k+1], xd) for k in range(time_steps-1)])
+                                            +self.loss_func(traj[k+1], xd) for k in range(time_steps-1)]) + 0.5*adj_traj[-1].matmul(adj_traj[-1])
                     else:
                         ## beta=1.5 for point clouds, trapizoidal rule to integrate
                         beta = 1.75                      
                         loss = beta*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) 
-                                        for k in range(time_steps-1)])
+                                        for k in range(time_steps-1)]) 
             loss.backward()
             self.optimizer.step()
             

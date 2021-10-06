@@ -21,8 +21,8 @@ import sys
 ## Data: 
 with open('data.txt', 'rb') as fp:
     data_line, test = pickle.load(fp)
-dataloader = DataLoader(data_line, batch_size=64, shuffle=True)
-dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=True)
+dataloader = DataLoader(data_line, batch_size=64, shuffle=False)
+dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=False)
 for inputs, targets in dataloader_viz:
     break
 
@@ -31,7 +31,7 @@ for inputs, targets in dataloader_viz:
 hidden_dim, data_dim = 2, 2
 T, num_steps = 5.0, 10  #T is the end time, num_steps are the amount of discretization steps for the ODE solver
 dt = T/num_steps
-turnpike = False
+turnpike = True
 bound = 0.
 fp = False
 cross_entropy = True
@@ -91,10 +91,19 @@ print("--- %s seconds ---" % (time.time() - start_time))
 # plt_norm_state(rob_node, inputs, timesteps=num_steps)
 # plt_train_error(rob_node, inputs, targets, timesteps=num_steps, filename = 'rob_train_error.pdf')
 # feature_plot(feature_history, targets)
-plt_classifier(anode, num_steps=10) 
-plt_classifier(rob_node, num_steps=10, save_fig = 'rob_generalization.pdf')
-trajectory_gif(anode, inputs, targets, timesteps=num_steps, filename = 'standard.gif')
-trajectory_gif(rob_node, inputs, targets, timesteps=num_steps, filename = 'rob.gif')
+
+plt_classifier(anode, num_steps=10, save_fig = '1generalization.pdf') 
+plt_classifier(rob_node, num_steps=10, save_fig = '1rob_generalization.pdf')
+trajectory_gif(anode, inputs, targets, timesteps=num_steps, filename = '1turn_standard.gif')
+trajectory_gif(rob_node, inputs, targets, timesteps=num_steps, filename = '1turn_rob.gif')
+
+# inputs[0] = inputs[0] + 2
+
+
+
+# trajectory_gif(anode, inputs, targets, timesteps=num_steps, filename = '1standard_pert.gif')
+# trajectory_gif(rob_node, inputs, targets, timesteps=num_steps, filename = '1rob_pert.gif')
+
 # ##--------------#
 ## Saving the weights:
 # pars = []
