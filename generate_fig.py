@@ -14,6 +14,8 @@ from models.neural_odes import NeuralODE, robNeuralODE
 from models.resnets import ResNet
 import pickle
 import sys
+import matplotlib.pyplot as plt
+import imageio
 
 
 
@@ -35,6 +37,8 @@ turnpike = True
 bound = 0.
 fp = False
 cross_entropy = True
+
+train = True #Should the models be trained before generating images?
 
 num_epochs = 70 #number of optimization epochs for gradient decent
 
@@ -79,8 +83,9 @@ start_time = time.time()
 #     feature_history = get_feature_history(trainer_anode, dataloader, 
 #                                           inputs, targets, num_epochs)
 # else:
-trainer_anode.train(dataloader, num_epochs)
-trainer_rob_node.train(dataloader, num_epochs)
+if train:
+    trainer_anode.train(dataloader, num_epochs)
+    trainer_rob_node.train(dataloader, num_epochs)
 print("--- %s seconds ---" % (time.time() - start_time))
 
 ##--------------#
@@ -92,10 +97,25 @@ print("--- %s seconds ---" % (time.time() - start_time))
 # plt_train_error(rob_node, inputs, targets, timesteps=num_steps, filename = 'rob_train_error.pdf')
 # feature_plot(feature_history, targets)
 
+filename_base = '1traj'
+filename_s = filename_base + '_s'
+filename_r = filename_base + '_r'
+
 plt_classifier(anode, num_steps=10, save_fig = '1generalization.pdf') 
 plt_classifier(rob_node, num_steps=10, save_fig = '1rob_generalization.pdf')
-trajectory_gif(anode, inputs, targets, timesteps=num_steps, filename = '1turn_standard.gif')
-trajectory_gif(rob_node, inputs, targets, timesteps=num_steps, filename = '1turn_rob.gif')
+trajectory_gif(anode, inputs, targets, timesteps=num_steps, filename = filename_s +'.gif')
+trajectory_gif(rob_node, inputs, targets, timesteps=num_steps, filename = filename_r + '.gif')
+
+plt.figure(1)
+plt.subplot(121)
+plt.imshow(imageio.imread(filename_s + '29.png'))
+plt.axis('off')
+plt.subplot(122)
+plt.imshow(imageio.imread(filename_r + '29.png'))
+plt.axis('off')
+
+plt.savefig('1comparison_' + filename_base + '.png',
+                    format='png', dpi=300, bbox_inches='tight')
 
 # inputs[0] = inputs[0] + 2
 
