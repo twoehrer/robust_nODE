@@ -28,6 +28,7 @@ dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=False)
 for inputs, targets in dataloader_viz:
     break
 
+
 ##--------------#
 ## Setup:
 hidden_dim, data_dim = 2, 2
@@ -38,9 +39,9 @@ bound = 0.
 fp = False
 cross_entropy = True
 
-train = True #Should the models be trained before generating images?
 
-num_epochs = 70 #number of optimization epochs for gradient decent
+
+num_epochs = 140 #number of optimization epochs for gradient decent
 
 if turnpike:
     weight_decay = 0 if bound>0. else dt*0.01
@@ -54,9 +55,6 @@ anode = NeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity='ta
 
 rob_node = robNeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity='tanh', 
                             architecture='outside', T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
-
-print("CHECKPOINT ANODE")
-# anode = ResNet(data_dim, hidden_dim, num_steps) #this is a try
 
 optimizer_anode = torch.optim.Adam(anode.parameters(), lr=1e-3, weight_decay=weight_decay) #weight decay parameter modifies norm
 trainer_anode = Trainer(anode, optimizer_anode, device, cross_entropy=cross_entropy, 
@@ -83,9 +81,9 @@ start_time = time.time()
 #     feature_history = get_feature_history(trainer_anode, dataloader, 
 #                                           inputs, targets, num_epochs)
 # else:
-if train:
-    trainer_anode.train(dataloader, num_epochs)
-    trainer_rob_node.train(dataloader, num_epochs)
+
+trainer_anode.train(dataloader, num_epochs)
+trainer_rob_node.train(dataloader, num_epochs)
 print("--- %s seconds ---" % (time.time() - start_time))
 
 ##--------------#
@@ -96,6 +94,8 @@ print("--- %s seconds ---" % (time.time() - start_time))
 # plt_norm_state(rob_node, inputs, timesteps=num_steps)
 # plt_train_error(rob_node, inputs, targets, timesteps=num_steps, filename = 'rob_train_error.pdf')
 # feature_plot(feature_history, targets)
+
+
 
 filename_base = '1traj'
 filename_s = filename_base + '_s'
