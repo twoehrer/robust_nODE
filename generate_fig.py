@@ -23,8 +23,8 @@ import imageio
 ## Data: 
 with open('data.txt', 'rb') as fp:
     data_line, test = pickle.load(fp)
-dataloader = DataLoader(data_line, batch_size=64, shuffle=False)
-dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=False)
+dataloader = DataLoader(data_line, batch_size=64, shuffle=True)
+dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=True)
 for inputs, targets in dataloader_viz:
     break
 
@@ -136,5 +136,5 @@ plt.savefig('1comparison_' + filename_base + '.png',
 # plt_norm_control(anode)
 # ##--------------#
 
-
+torch.save(rob_node.state_dict(), './saved/rob_node')
 
