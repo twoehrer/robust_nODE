@@ -385,7 +385,8 @@ class robNeuralODE(nn.Module):
         p2 = torch.tensor([0.,1.])
 
         #computes the solutions p(0) for the canonical initial conditions
-        self.adj_traj_p1 = self.adj_flow.trajectory(p1, self.time_steps)
+        self.adj_traj_p1 = self.adj_flow.trajectory(p1, self.time_steps).detach()
+        self.adj_traj_p1.requires_grad = False
         self.adj_traj_p2 = self.adj_flow.trajectory(p2, self.time_steps)
         
         if return_features:
