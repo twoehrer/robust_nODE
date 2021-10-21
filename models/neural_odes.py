@@ -181,7 +181,9 @@ class adj_Dynamics(nn.Module):
         
         #we need the backwards time weights
         w_t = self.f_dynamics.fc2_time[time_steps - k - 1].weight 
+        w_t = w_t.requires_grad = False
         b_t = self.f_dynamics.fc2_time[time_steps - k - 1].bias
+        b_t = b_t.requires_grad = False
         x = self.x_traj[time_steps - k - 1]
         #calculation of -Dxf(u(t),x(t))
 
@@ -345,7 +347,7 @@ class robNeuralODE(nn.Module):
         self.cross_entropy = cross_entropy
         self.fixed_projector = fixed_projector
 
-        self.f_dynamics = Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps)
+        self.f_dynamics = Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps).detach()
         self.flow = Semiflow(device, self.f_dynamics, tol, adjoint, T,  time_steps)
 
         self.adjoint = adjoint
@@ -380,13 +382,13 @@ class robNeuralODE(nn.Module):
                 self.proj_traj = self.non_linearity(self.proj_traj)
         adj_dynamics = adj_Dynamics(self.f_dynamics, self.proj_traj, self.device, self.data_dim, self.hidden_dim)
        
-        self.adj_flow = Semiflow(self.device, adj_dynamics, self.tol, self.adjoint, self.T,  self.time_steps)
+        adj_flow = Semiflow(self.device, adj_dynamics, self.tol, self.adjoint, self.T,  self.time_steps)
         p1 = torch.tensor([1.,0.]) #we want to take initial conditions in all canonical directions in to account
         p2 = torch.tensor([0.,1.])
 
         #computes the solutions p(0) for the canonical initial conditions
-        self.adj_traj_p1 = self.adj_flow.trajectory(p1, self.time_steps).detach() #not sure at all if this should be detached or not
-        self.adj_traj_p2 = self.adj_flow.trajectory(p2, self.time_steps).detach() #same here
+        self.adj_traj_p1 = adj_flow.trajectory(p1, self.time_steps) #not sure at all if this should be detached or not
+        self.adj_traj_p2 = adj_flow.trajectory(p2, self.time_steps) #same here
         
         if return_features:
             return features, pred
