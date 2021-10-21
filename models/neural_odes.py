@@ -181,9 +181,7 @@ class adj_Dynamics(nn.Module):
         
         #we need the backwards time weights
         w_t = self.f_dynamics.fc2_time[time_steps - k - 1].weight 
-        w_t = w_t.requires_grad = False
         b_t = self.f_dynamics.fc2_time[time_steps - k - 1].bias
-        b_t = b_t.requires_grad = False
         x = self.x_traj[time_steps - k - 1]
         #calculation of -Dxf(u(t),x(t))
 
@@ -347,9 +345,9 @@ class robNeuralODE(nn.Module):
         self.cross_entropy = cross_entropy
         self.fixed_projector = fixed_projector
 
-        self.f_dynamics = Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps).detach()
+        self.f_dynamics = Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps)
         self.flow = Semiflow(device, self.f_dynamics, tol, adjoint, T,  time_steps)
-
+    
         self.adjoint = adjoint
         
 
