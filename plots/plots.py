@@ -323,7 +323,7 @@ def plt_dataset(inputs, targets, plot_range=(-2.0, 2.0), save_fig="dataset.pdf")
         plt.clf()
         plt.close()  
 
-def plt_classifier(model, plot_range=(-2.0, 2.0), num_steps=201, save_fig='generalization.pdf'):
+def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201, save_fig='generalization.pdf'):
     """
     Plots the final classifier; train and test data are superposed.
     Only for toy cloud data.
@@ -338,8 +338,10 @@ def plt_classifier(model, plot_range=(-2.0, 2.0), num_steps=201, save_fig='gener
     font = {'size'   : 13}
     rc('font', **font)
 
-    with open('data.txt', 'rb') as fp:
-        data_line, test = pickle.load(fp)
+    # with open('data.txt', 'rb') as fp:
+    #     data_line, test = pickle.load(fp)
+
+
     
     dataloader_viz = DataLoader(data_line, batch_size=800, shuffle=True)
     test_viz = DataLoader(test, batch_size = 80, shuffle=True)

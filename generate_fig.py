@@ -101,8 +101,8 @@ filename_base = '1traj'
 filename_s = filename_base + '_s'
 filename_r = filename_base + '_r'
 
-plt_classifier(anode, num_steps=10, save_fig = '1generalization.pdf') 
-plt_classifier(rob_node, num_steps=10, save_fig = '1rob_generalization.pdf')
+plt_classifier(anode, data_line, num_steps=10, save_fig = '1generalization.pdf') 
+plt_classifier(rob_node, data_line, num_steps=10, save_fig = '1rob_generalization.pdf')
 trajectory_gif(anode, inputs, targets, timesteps=num_steps, filename = filename_s +'.gif')
 trajectory_gif(rob_node, inputs, targets, timesteps=num_steps, filename = filename_r + '.gif')
 
