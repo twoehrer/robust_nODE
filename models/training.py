@@ -90,7 +90,9 @@ class Trainer():
                         l1_regularization += param.abs().sum()
                     ## lambda = 5*1e-3 for spheres+inside
                     loss = 1.5*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) 
-                                    for k in range(time_steps-1)]) + 0.005*l1_regularization
+                                    for k in range(time_steps-1)]) + 0.005*l1_regularization #this was 0.005
+                    
+                    print('yes L1 term present')
                 else: #l2 controls
                     if self.fixed_projector: #maybe not needed
                         xd = torch.tensor([[6.0/0.8156, 0.5/(2*0.4525)] if x==1 else [-6.0/0.8156, -2.0/(2*0.4525)] for x in y_batch])
@@ -241,8 +243,8 @@ class robTrainer():
                     for param in self.model.parameters():
                         l1_regularization += param.abs().sum()
                     ## lambda = 5*1e-3 for spheres+inside
-                    loss = 1.5*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) 
-                                    for k in range(time_steps-1)]) + 0.005*l1_regularization + rob_factor*adj_traj[-1].matmul(adj_traj[-1])
+                    loss = 1.5*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) for k in range(time_steps-1)]) 
+                    + 0.005*l1_regularization + rob_factor*adj_traj[-1].matmul(adj_traj[-1])
                 else: #l2 controls
                     if self.fixed_projector: #maybe not needed
                         xd = torch.tensor([[6.0/0.8156, 0.5/(2*0.4525)] if x==1 else [-6.0/0.8156, -2.0/(2*0.4525)] for x in y_batch])

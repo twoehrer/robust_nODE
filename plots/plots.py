@@ -416,6 +416,7 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
     plt.ylabel(r'$x_2$', fontsize=13)
 
     if len(save_fig):
+        plt.show()
         plt.savefig(save_fig, format='pdf', bbox_inches='tight')
         plt.clf()
         plt.close()

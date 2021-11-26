@@ -35,7 +35,7 @@ hidden_dim, data_dim = 2, 2
 T, num_steps = 5.0, 10  #T is the end time, num_steps are the amount of discretization steps for the ODE solver
 dt = T/num_steps
 turnpike = True
-bound = 0.
+bound = 0.  #this worked with 0.
 fp = False
 cross_entropy = True
 
