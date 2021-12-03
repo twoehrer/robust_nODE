@@ -343,8 +343,8 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
 
 
     
-    dataloader_viz = DataLoader(data_line, batch_size=800, shuffle=True)
-    test_viz = DataLoader(test, batch_size = 80, shuffle=True)
+    dataloader_viz = DataLoader(data_line, batch_size=100, shuffle=True) #was 800
+    test_viz = DataLoader(test, batch_size = 80, shuffle=True) #was 80
     for inputs, targets in dataloader_viz:
         break    
     for test_inputs, test_targets in test_viz:
@@ -403,7 +403,7 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
     
     plt.scatter(inputs[:,0], inputs[:,1], c=color, alpha=0.95, marker = 'o', linewidth=0.45, edgecolors='black', label='train')
     plt.scatter(test_inputs[:,0], test_inputs[:, 1], c=test_color, alpha=0.95, marker='o', linewidth=1.75, edgecolors='black', label='test')
-    
+    fig.patch.set_facecolor('white')
     from matplotlib.lines import Line2D
     legend_elements = [Line2D([0], [0], marker='o', color='w', mew=0.45, mec='black', label='train',
                           markerfacecolor='lightgray', markersize=7),
@@ -416,8 +416,8 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
     plt.ylabel(r'$x_2$', fontsize=13)
 
     if len(save_fig):
+        plt.savefig(save_fig, bbox_inches='tight') #format='png'
         plt.show()
-        plt.savefig(save_fig, format='pdf', bbox_inches='tight')
         plt.clf()
         plt.close()
 

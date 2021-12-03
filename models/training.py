@@ -213,7 +213,7 @@ class robTrainer():
         epoch_acc = 0.
 
         
-        rob_factor = 0.3
+        rob_factor = 1 #changed from 0.2
         for i, (x_batch, y_batch) in enumerate(data_loader):
             self.optimizer.zero_grad()
             x_batch = x_batch.to(self.device)
