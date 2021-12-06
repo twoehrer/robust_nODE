@@ -123,6 +123,8 @@ class Dynamics(nn.Module):
             #out = self.non_linearity(x.matmul(w1_t.t()) + b1_t)
             #out = out.matmul(w2_t.t()) + b2_t
             
+            #x.matmul(w1_t.t()) is the same as torch.matmul(w1_t,x) simple matrix-vector multiplication
+
             #Domenec Test
             out1 = torch.sqrt(self.non_linearity(x.matmul(w1_t.t())+torch.ones(self.hidden_dim) + b1_t) + 1e-6*torch.ones(self.hidden_dim))-torch.sqrt(1e-6*torch.ones(self.hidden_dim))
             out2 = torch.sqrt(self.non_linearity(-x.matmul(w1_t.t())+torch.ones(self.hidden_dim) + b1_t) + 1e-6*torch.ones(self.hidden_dim))-torch.sqrt(1e-6*torch.ones(self.hidden_dim))
@@ -183,13 +185,23 @@ class adj_Dynamics(nn.Module):
         w_t = self.f_dynamics.fc2_time[time_steps - k - 1].weight 
         b_t = self.f_dynamics.fc2_time[time_steps - k - 1].bias
         x = self.x_traj[time_steps - k - 1]
-        #calculation of -Dxf(u(t),x(t))
+        print('w_t',w_t.size(),'b_t', b_t.size(), 'x', x.size(), 'x_traj', self.x_traj.size(), 'p', p.size())
+         # calculation of -Dxg(u(t),x(t))p
+        out = torch.matmul(x, w_t.t()) + b_t  #this does matrix vector multiplication for each k: w_t[k]*x
+        out = self.non_linearity(out)
+        out = torch.diag_embed(out)
+        out = torch.matmul(w_t.t(),out)  #this was not transposed before
+        p = p.unsqueeze(-1) #reshape to realize batch matrix vector multiplication as matrix matrix multiplication
+        out = -torch.matmul(out,p)
+        out = out.squeeze() #remove the reshaping
 
-        out = x.matmul(w_t.t())+b_t
-        out = self.non_linearity(out) #this should have dimension d
-        out = torch.diag(out) #this should make a diagonal d times d matrix out of it
-        out = out.matmul(w_t.t()) #prime_simga matrix times weights
-        out = - out.matmul(p) # -Dxf(u,x) * p .... p is the variable, x is fixed, we need to solve for p
+       
+
+        # out = x.matmul(w_t.t())+b_t
+        # out = self.non_linearity(out) #this should have dimension d
+        # out = torch.diag(out) #this should make a diagonal d times d matrix out of it
+        # out = out.matmul(w_t.t()) #prime_simga matrix times weights
+        # out = - out.matmul(p) # -Dxf(u,x) * p .... p is the variable, x is fixed, we need to solve for p
 
         
         return out
@@ -381,8 +393,8 @@ class robNeuralODE(nn.Module):
         adj_dynamics = adj_Dynamics(self.f_dynamics, self.proj_traj, self.device, self.data_dim, self.hidden_dim)
        
         adj_flow = Semiflow(self.device, adj_dynamics, self.tol, self.adjoint, self.T,  self.time_steps)
-        p1 = torch.tensor([1.,0.]) #we want to take initial conditions in all canonical directions in to account
-        p2 = torch.tensor([0.,1.])
+        p1 = torch.zeros(x.size()) + torch.tensor([1,0]) #we want to take initial conditions in all canonical directions in to account
+        p2 = torch.zeros(x.size()) + torch.tensor([0,1])
 
         #computes the solutions p(0) for the canonical initial conditions
         self.adj_traj_p1 = adj_flow.trajectory(p1, self.time_steps) #not sure at all if this should be detached or not
