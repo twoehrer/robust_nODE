@@ -92,7 +92,6 @@ class Trainer():
                     loss = 1.5*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) 
                                     for k in range(time_steps-1)]) + 0.005*l1_regularization #this was 0.005
                     
-                    print('yes L1 term present')
                 else: #l2 controls
                     if self.fixed_projector: #maybe not needed
                         xd = torch.tensor([[6.0/0.8156, 0.5/(2*0.4525)] if x==1 else [-6.0/0.8156, -2.0/(2*0.4525)] for x in y_batch])
@@ -236,7 +235,7 @@ class robTrainer():
             if not self.turnpike:                                       ## Classical empirical risk minimization
                 loss = self.loss_func(y_pred, y_batch) + rob_factor*adj_traj[-1].square().sum()
                 # loss = 0.01* adj_traj[-1].matmul(adj_traj[-1])
-                
+                print('no turnpike: |p(0)|^2',adj_traj[-1].square().sum())
             else:                                                       ## Augmented empirical risk minimization
                 if self.threshold>0: # l1 controls
                     l1_regularization = 0.
@@ -245,6 +244,7 @@ class robTrainer():
                     ## lambda = 5*1e-3 for spheres+inside
                     loss = 1.5*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) for k in range(time_steps-1)]) 
                     + 0.005*l1_regularization + rob_factor*adj_traj[-1].square().sum()
+                    print('in l1 reg: |p(0)|^2',adj_traj[-1].square().sum())
                 else: #l2 controls
                     if self.fixed_projector: #maybe not needed
                         xd = torch.tensor([[6.0/0.8156, 0.5/(2*0.4525)] if x==1 else [-6.0/0.8156, -2.0/(2*0.4525)] for x in y_batch])
@@ -255,6 +255,7 @@ class robTrainer():
                         beta = 1.75                      
                         loss = beta*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) 
                                         for k in range(time_steps-1)]) + rob_factor*adj_traj[-1].square().sum()
+                        print('in l2 control: |p(0)|^2',adj_traj[-1].square().sum())
             loss.backward()
             self.optimizer.step()
             

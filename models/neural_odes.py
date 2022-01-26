@@ -185,7 +185,7 @@ class adj_Dynamics(nn.Module):
         w_t = self.f_dynamics.fc2_time[time_steps - k - 1].weight 
         b_t = self.f_dynamics.fc2_time[time_steps - k - 1].bias
         x = self.x_traj[time_steps - k - 1]
-        print('w_t',w_t.size(),'b_t', b_t.size(), 'x', x.size(), 'x_traj', self.x_traj.size(), 'p', p.size())
+        #print('w_t',w_t.size(),'b_t', b_t.size(), 'x', x.size(), 'x_traj', self.x_traj.size(), 'p', p.size())
          # calculation of -Dxg(u(t),x(t))p
         out = torch.matmul(x, w_t.t()) + b_t  #this does matrix vector multiplication for each k: w_t[k]*x
         out = self.non_linearity(out)
