@@ -1,5 +1,6 @@
 *.gif
 *.pdf
+*.png
 img_results*/
 
 __pycache__/
