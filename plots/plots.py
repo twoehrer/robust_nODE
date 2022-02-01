@@ -334,7 +334,7 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
     import seaborn as sns
     from torch.utils.data import DataLoader
     import pickle
-    rc("text", usetex = True)
+    rc("text", usetex = False)
     font = {'size'   : 13}
     rc('font', **font)
 

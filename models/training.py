@@ -174,7 +174,7 @@ class epsTrainer():
     """
     def __init__(self, model, optimizer, device, cross_entropy=True,
                  print_freq=10, record_freq=10, verbose=True, save_dir=None, 
-                 turnpike=True, bound=0., fixed_projector=False):
+                 turnpike=True, bound=0., fixed_projector=False, eps = 0.01):
         self.model = model
         self.optimizer = optimizer
         self.cross_entropy = cross_entropy
@@ -199,6 +199,7 @@ class epsTrainer():
                           'epoch_loss_history': [], 'epoch_acc_history': []}
         self.buffer = {'loss': [], 'accuracy': []}
         self.is_resnet = hasattr(self.model, 'num_layers')
+        self.eps = eps
 
     def train(self, data_loader, num_epochs):
         for epoch in range(num_epochs):
@@ -209,6 +210,17 @@ class epsTrainer():
     def _train_epoch(self, data_loader, epoch):
         epoch_loss = 0.
         epoch_acc = 0.
+
+        v_steps = 8
+        v = torch.zeros(v_steps,2)
+        eps = self.eps
+        loss_max = torch.tensor(0.)
+        
+        for k in range(v_steps):
+            t = k*(2*torch.tensor(math.pi))/v_steps
+            v[k] = torch.tensor([torch.sin(t),torch.cos(t)])
+    #generate perturbed directions
+
         for i, (x_batch, y_batch) in enumerate(data_loader):
             self.optimizer.zero_grad()
             x_batch = x_batch.to(self.device)
@@ -228,24 +240,17 @@ class epsTrainer():
 
             if not self.turnpike:                                       ## Classical empirical risk minimization
                 loss = self.loss_func(y_pred, y_batch)
-                
+                # v = torch.tensor([0,1.])
                 #adding perturbed trajectories
-                v_steps = 5
-                eps = 0.1
                 loss_max = torch.tensor(0.)
-            #generate perturbed directions
                 for k in range(v_steps):
-                    t = k*(2*torch.tensor(math.pi))/v_steps
-                    v = torch.tensor([torch.sin(t),torch.cos(t)])
-                    print('direction',v)
-                    
-                    y_eps, traj_eps = self.model(x_batch + eps*v) #model for perturbed input
+                    y_eps, traj_eps = self.model(x_batch + eps*v[k]) #model for perturbed input
                     loss_v = (traj_eps - traj).abs().sum(dim = 0) #for trapezoidal rule. endpoints not regarded atm
                     loss_max = torch.maximum(loss_max,loss_v)
-                    print('loss_max exists')
+                    print('loss max', loss_max.sum())
                     # print('loss_v', loss_v)
                     # print('loss max',loss_max)
-                loss += loss_max.sum()
+                loss += 0.005*loss_max.sum()
                 print('loss',loss)
             else:                                                       ## Augmented empirical risk minimization
                 if self.threshold>0: # l1 controls
