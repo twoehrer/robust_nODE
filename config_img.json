@@ -1,7 +1,7 @@
 {
   "id": "mnist_experiments",
   "num_reps": 5, 
-  "dataset": "fashion_mnist",
+  "dataset": "mnist",
   "model_configs": [
     {
       "type": "resnet",

@@ -211,7 +211,7 @@ class epsTrainer():
         epoch_loss = 0.
         epoch_acc = 0.
 
-        v_steps = 8
+        v_steps = 5
         v = torch.zeros(v_steps,2)
         eps = self.eps
         loss_max = torch.tensor(0.)
@@ -242,16 +242,18 @@ class epsTrainer():
                 loss = self.loss_func(y_pred, y_batch)
                 # v = torch.tensor([0,1.])
                 #adding perturbed trajectories
-                loss_max = torch.tensor(0.)
-                for k in range(v_steps):
-                    y_eps, traj_eps = self.model(x_batch + eps*v[k]) #model for perturbed input
-                    loss_v = (traj_eps - traj).abs().sum(dim = 0) #for trapezoidal rule. endpoints not regarded atm
-                    loss_max = torch.maximum(loss_max,loss_v)
-                    print('loss max', loss_max.sum())
-                    # print('loss_v', loss_v)
-                    # print('loss max',loss_max)
-                loss += 0.005*loss_max.sum()
-                print('loss',loss)
+                
+                if eps > 0.:
+                    loss_max = torch.tensor(0.)
+                    for k in range(v_steps):
+                        y_eps, traj_eps = self.model(x_batch + eps*v[k]) #model for perturbed input
+                        loss_v = (traj_eps - traj).abs().sum(dim = 0) #for trapezoidal rule. endpoints not regarded atm
+                        loss_max = torch.maximum(loss_max,loss_v)
+                        # print('loss max', loss_max.sum())
+                        # print('loss_v', loss_v)
+                        # print('loss max',loss_max)
+                    loss += 0.005*loss_max.sum()
+                    # print('loss',loss)
             else:                                                       ## Augmented empirical risk minimization
                 if self.threshold>0: # l1 controls
                     l1_regularization = 0.
