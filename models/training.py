@@ -158,6 +158,9 @@ class Trainer():
 
         return epoch_loss / len(data_loader)
 
+
+
+
 class epsTrainer():
     """
     Given an optimizer, we write the training loop for minimizing the functional.
@@ -215,16 +218,20 @@ class epsTrainer():
         v = torch.zeros(v_steps,2)
         eps = self.eps
         loss_max = torch.tensor(0.)
-        
-        for k in range(v_steps):
-            t = k*(2*torch.tensor(math.pi))/v_steps
-            v[k] = torch.tensor([torch.sin(t),torch.cos(t)])
-    #generate perturbed directions
 
+
+        
+        # for k in range(v_steps):
+        #     t = k*(2*torch.tensor(math.pi))/v_steps
+        #     v[k] = torch.tensor([torch.sin(t),torch.cos(t)])
+    #generate perturbed directions
+        x_batch_grad = torch.tensor(0.)
         for i, (x_batch, y_batch) in enumerate(data_loader):
             self.optimizer.zero_grad()
             x_batch = x_batch.to(self.device)
             y_batch = y_batch.to(self.device)
+            
+            x_batch.requires_grad = True #i need this for Fast sign gradient method
             
             if not self.is_resnet:
                 y_pred, traj = self.model(x_batch)   
@@ -244,16 +251,26 @@ class epsTrainer():
                 #adding perturbed trajectories
                 
                 if eps > 0.:
-                    loss_max = torch.tensor(0.)
-                    for k in range(v_steps):
-                        y_eps, traj_eps = self.model(x_batch + eps*v[k]) #model for perturbed input
-                        loss_v = (traj_eps - traj).abs().sum(dim = 0) #for trapezoidal rule. endpoints not regarded atm
-                        loss_max = torch.maximum(loss_max,loss_v)
+                    # loss_max = torch.tensor(0.)
+                    
+                    #Generate the sign gradient vector
+                    loss.backward(retain_graph=True)
+                    x_batch_grad = x_batch.grad.data.sign()
+                    # print('grad size',x_batch_grad.size())
+                    # print('size', x_batch.size())
+                    
+                    # for k in range(v_steps):
+                    #     y_eps, traj_eps = self.model(x_batch + eps*v[k]) #model for perturbed input
+                    #     loss_v = (traj_eps - traj).abs().sum(dim = 0) #for trapezoidal rule. endpoints not regarded atm
+                    #     loss_max = torch.maximum(loss_max,loss_v)
                         # print('loss max', loss_max.sum())
                         # print('loss_v', loss_v)
                         # print('loss max',loss_max)
-                    loss += 0.005*loss_max.sum()
+                    # loss += 0.005*loss_max.sum()
                     # print('loss',loss)
+
+                    y_pred_eps, traj_eps = self.model(x_batch + eps * x_batch_grad)
+                    loss += 0.005 * self.loss_func(y_pred_eps, y_batch)
             else:                                                       ## Augmented empirical risk minimization
                 if self.threshold>0: # l1 controls
                     l1_regularization = 0.
@@ -275,6 +292,9 @@ class epsTrainer():
                                         for k in range(time_steps-1)])
             loss.backward()
             self.optimizer.step()
+            
+
+            
             
             clipper = WeightClipper(self.threshold)
             if self.threshold>0: 

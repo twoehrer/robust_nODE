@@ -37,7 +37,7 @@ v_steps = 5
 
 
 training = True #train new network or load saved one
-num_epochs = 200 #number of optimization epochs for gradient decent
+num_epochs = 100 #number of optimization epochs for gradient decent
 
 
 
@@ -85,7 +85,7 @@ anode = NeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity=non
                     architecture=architecture, T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
 optimizer_anode = torch.optim.Adam(anode.parameters(), lr=1e-3, weight_decay=weight_decay) #weight decay parameter modifies norm
 trainer_anode = Trainer(anode, optimizer_anode, device, cross_entropy=cross_entropy, 
-                        turnpike=turnpike, bound=bound, fixed_projector=fp, verbose = False)       
+                        turnpike=turnpike, bound=bound, fixed_projector=fp, verbose = True)       
 
 trainer_anode.train(dataloader, num_epochs)
 plt_classifier(anode, data_line, test, num_steps=10, save_fig = '1generalization.png') 
@@ -95,6 +95,7 @@ plt_classifier(anode, data_line, test, num_steps=10, save_fig = '1generalization
 
 
 epsilons = [0., 0.001, 0.005, 0.01]
+# epsilons = [0.001]
 
 
 for eps in epsilons:

@@ -437,7 +437,7 @@ def histories_plt(all_history_info, plot_type='loss', shaded_err=False,
                   labels=[], include_mean=True, 
                   time_per_epoch=[], save_fig=''):
 
-    rc("text", usetex = True)
+    rc("text", usetex = False)
     font = {'size'   : 13}
     rc('font', **font)
 
@@ -495,7 +495,7 @@ def histories_plt(all_history_info, plot_type='loss', shaded_err=False,
             #locs = epochs
             #labels = range(1, len(epochs)+1)
             #plt.xticks(locs, labels)
-            plt.xticks(range(0, len(epochs), len(epochs)//10), range(1, len(epochs)+1, len(epochs)//10))
+            plt.xticks(range(0, len(epochs), max(len(epochs)//10,1)), range(1, len(epochs)+1, max(len(epochs)//10,1)))
         else:
             for k in range(len(histories)):
                 plt.plot(histories[k], c=color, alpha=0.1)     
