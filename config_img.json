@@ -1,6 +1,6 @@
 {
   "id": "mnist_experiments",
-  "num_reps": 5, 
+  "num_reps": 1, 
   "dataset": "mnist",
   "model_configs": [
     {
@@ -18,6 +18,8 @@
       "batch_size": 256,
       "record_freq": 10,
       "print_freq": 10,
-      "epochs": 40
+      "epochs": 10 ,
+      "_comment": "epochs was 40 before"
   }
+  
 }
