@@ -343,8 +343,8 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
 
 
     
-    dataloader_viz = DataLoader(data_line, batch_size=200, shuffle=True) #was 800
-    test_viz = DataLoader(test, batch_size = 80, shuffle=True) #was 80
+    dataloader_viz = DataLoader(data_line, batch_size=200, shuffle=False) #was 800
+    test_viz = DataLoader(test, batch_size = 80, shuffle=False) #was 80
     for inputs, targets in dataloader_viz:
         break    
     for test_inputs, test_targets in test_viz:
@@ -417,7 +417,7 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
 
     if len(save_fig):
         plt.savefig(save_fig, bbox_inches='tight') #format='png'
-        plt.show()
+        # plt.show()
         plt.clf()
         plt.close()
 

@@ -20,8 +20,13 @@ from sklearn.model_selection import train_test_split
 #if training = False, models will be loaded from file
 
 
+torch.backends.cudnn.deterministic = True
+torch.manual_seed(1)
+torch.cuda.manual_seed(1)
+
+
 hidden_dim, data_dim = 2, 2 
-T, num_steps = 5.0, 10  #T is the end time, num_steps are the amount of discretization steps for the ODE solver
+T, num_steps = 5.0, 20  #T is the end time, num_steps are the amount of discretization steps for the ODE solver
 dt = T/num_steps
 turnpike = False
 bound = 0.
@@ -37,7 +42,7 @@ v_steps = 5
 
 
 training = True #train new network or load saved one
-num_epochs = 100 #number of optimization epochs for gradient decent
+num_epochs = 80 #number of optimization epochs for gradient decent
 
 
 
@@ -52,10 +57,10 @@ else:
 
 
 ###DATA PREPARATION
-X, y = make_circles(3000, noise=noise, factor=0.15, random_state=1)
+X, y = make_circles(3000, noise=noise, factor=0.15, random_state=1, shuffle = shuffle)
 # X, y = make_moons(3000, noise = noise, random_state = 1)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.05)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.05 ) #random_state=2, shuffle = shuffle)
 
 X_train = torch.Tensor(X_train) # transform to torch tensor for dataloader
 y_train = torch.Tensor(y_train) #transform to torch tensor for dataloader
@@ -73,8 +78,13 @@ y_test = y_test.type(torch.int64) #dtype of original picle.load data
 data_line = TensorDataset(X_train,y_train) # create your datset
 test = TensorDataset(X_test, y_test)
 
-dataloader = DataLoader(data_line, batch_size=64, shuffle=shuffle)
-dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=shuffle)
+
+
+g = torch.Generator()
+g.manual_seed(0)
+
+dataloader = DataLoader(data_line, batch_size=64, shuffle=shuffle, generator=g)
+dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=shuffle, generator = g)
 
 
 
@@ -97,16 +107,25 @@ plt_classifier(anode, data_line, test, num_steps=10, save_fig = '1generalization
 epsilons = [0., 0.001, 0.005, 0.01]
 # epsilons = [0.001]
 
-
+# for j in range(3):
 for eps in epsilons:
+
+    torch.manual_seed(1)
     
     eps_node = NeuralODE(device, data_dim, hidden_dim, adjoint = False, augment_dim=0, non_linearity=non_linearity, 
                                 architecture=architecture, T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
+        
+    for name, param in eps_node.named_parameters():
+        i = 0
+        if param.requires_grad and i<2:
+            print(name, param.data)
+            i += 1
+
     optimizer_node = torch.optim.Adam(eps_node.parameters(), lr=1e-3, weight_decay = weight_decay) #weight decay parameter modifies norm
     trainer_eps_node = epsTrainer(eps_node, optimizer_node, device, cross_entropy = cross_entropy, 
                             turnpike=turnpike, bound=bound, fixed_projector=fp, verbose = False, eps =  eps)
     trainer_eps_node.train(dataloader, num_epochs)
-
+    
     plt_classifier(eps_node, data_line, test, num_steps=10, save_fig = '1generalization_eps{}'.format(eps) +'.png') 
     print('1generalization_eps{} created'.format(eps))
 

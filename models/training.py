@@ -227,6 +227,8 @@ class epsTrainer():
     #generate perturbed directions
         x_batch_grad = torch.tensor(0.)
         for i, (x_batch, y_batch) in enumerate(data_loader):
+            if i == 0:
+                print('first data batch', x_batch[0], y_batch[0])
             self.optimizer.zero_grad()
             x_batch = x_batch.to(self.device)
             y_batch = y_batch.to(self.device)
@@ -270,7 +272,8 @@ class epsTrainer():
                     # print('loss',loss)
 
                     y_pred_eps, traj_eps = self.model(x_batch + eps * x_batch_grad)
-                    loss += 0.005 * self.loss_func(y_pred_eps, y_batch)
+                    # if y_pred_eps = y_batch 
+                    loss += 0.01 * self.loss_func(y_pred_eps, y_batch) #was 0.005 before
             else:                                                       ## Augmented empirical risk minimization
                 if self.threshold>0: # l1 controls
                     l1_regularization = 0.
