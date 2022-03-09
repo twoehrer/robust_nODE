@@ -227,8 +227,8 @@ class epsTrainer():
     #generate perturbed directions
         x_batch_grad = torch.tensor(0.)
         for i, (x_batch, y_batch) in enumerate(data_loader):
-            if i == 0:
-                print('first data batch', x_batch[0], y_batch[0])
+                # if i == 0:
+                #     print('first data batch', x_batch[0], y_batch[0])
             self.optimizer.zero_grad()
             x_batch = x_batch.to(self.device)
             y_batch = y_batch.to(self.device)
@@ -271,9 +271,21 @@ class epsTrainer():
                     # loss += 0.005*loss_max.sum()
                     # print('loss',loss)
 
-                    y_pred_eps, traj_eps = self.model(x_batch + eps * x_batch_grad)
-                    # if y_pred_eps = y_batch 
-                    loss += 0.01 * self.loss_func(y_pred_eps, y_batch) #was 0.005 before
+                    y_pred_eps, _ = self.model(x_batch + eps * x_batch_grad)
+                    y_pred, _ = self.model(x_batch)
+
+                    # print('y_eps', y_pred_eps)
+                    # print('y_pred', y_pred)
+                    # print('abs', torch.abs(y_pred_eps - y_pred))
+                    
+                    #this should only add an extra loss to the batch items that differe from the unperturbed prediction more than pert
+                    pert = 0.01
+                    diff = torch.abs(y_pred_eps - y_pred)
+                    cond = diff > pert
+                    y_eff = torch.where(cond, y_pred_eps, torch.tensor(0, dtype=y_pred_eps.dtype))
+
+                    print('y_eff', y_eff)
+                    loss += 0.01 * self.loss_func(y_eff, y_batch) #was 0.005 before
             else:                                                       ## Augmented empirical risk minimization
                 if self.threshold>0: # l1 controls
                     l1_regularization = 0.

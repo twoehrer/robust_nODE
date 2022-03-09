@@ -104,7 +104,7 @@ plt_classifier(anode, data_line, test, num_steps=10, save_fig = '1generalization
 #robust training
 
 
-epsilons = [0., 0.001, 0.005, 0.01]
+epsilons = [0., 0.05, 0.1]
 # epsilons = [0.001]
 
 # for j in range(3):
@@ -126,7 +126,7 @@ for eps in epsilons:
                             turnpike=turnpike, bound=bound, fixed_projector=fp, verbose = False, eps =  eps)
     trainer_eps_node.train(dataloader, num_epochs)
     
-    plt_classifier(eps_node, data_line, test, num_steps=10, save_fig = '1generalization_eps{}'.format(eps) +'.png') 
+    plt_classifier(eps_node, data_line, test, num_steps=10, save_fig = '1dgeneralization_eps{}'.format(eps) +'.png') 
     print('1generalization_eps{} created'.format(eps))
 
 
