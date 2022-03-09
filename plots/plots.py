@@ -323,7 +323,7 @@ def plt_dataset(inputs, targets, plot_range=(-2.0, 2.0), save_fig="dataset.pdf")
         plt.clf()
         plt.close()  
 
-def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201, save_fig='generalization.pdf'):
+def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201, footnote = None, save_fig='generalization.pdf'):
     """
     Plots the final classifier; train and test data are superposed.
     Only for toy cloud data.
@@ -414,6 +414,7 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
     plt.title('Generalization outside training data', fontsize=13)
     plt.xlabel(r'$x_1$', fontsize=13)
     plt.ylabel(r'$x_2$', fontsize=13)
+    plt.figtext(0.5, 0.01, footnote, ha="center", fontsize=10)
 
     if len(save_fig):
         plt.savefig(save_fig, bbox_inches='tight') #format='png'
