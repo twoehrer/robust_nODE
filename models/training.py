@@ -380,7 +380,7 @@ class robTrainer():
     """
     def __init__(self, model, optimizer, device, cross_entropy=True,
                  print_freq=10, record_freq=10, verbose=True, save_dir=None, 
-                 turnpike=True, bound=0., fixed_projector=False):
+                 turnpike=True, bound=0., fixed_projector=False, rob_factor = 0.05):
         self.model = model
         self.optimizer = optimizer
         self.cross_entropy = cross_entropy
@@ -400,6 +400,7 @@ class robTrainer():
         # Examples: M \sim T for toy datasets; 200 for mnist
         self.threshold = bound    
         self.fixed_projector = fixed_projector
+        self.rob_factor = rob_factor
 
         self.histories = {'loss_history': [], 'acc_history': [],
                           'epoch_loss_history': [], 'epoch_acc_history': []}
@@ -417,7 +418,7 @@ class robTrainer():
         epoch_acc = 0.
 
         
-        rob_factor = 0.05 #changed from 0.2
+        rob_factor = 0.005 #changed from 0.2
         for i, (x_batch, y_batch) in enumerate(data_loader):
             self.optimizer.zero_grad()
             x_batch = x_batch.to(self.device)
@@ -440,7 +441,7 @@ class robTrainer():
             if not self.turnpike:                                       ## Classical empirical risk minimization
                 loss = self.loss_func(y_pred, y_batch) + rob_factor*adj_traj[-1].abs().sum()
                 # loss = 0.01* adj_traj[-1].matmul(adj_traj[-1])
-                print('no turnpike: |p(0)|^2',adj_traj[-1].abs().sum())
+                #print('no turnpike: |p(0)|',adj_traj[-1].abs().sum())
             else:                                                       ## Augmented empirical risk minimization
                 if self.threshold>0: # l1 controls
                     l1_regularization = 0.
@@ -449,7 +450,7 @@ class robTrainer():
                     ## lambda = 5*1e-3 for spheres+inside
                     loss = 1.5*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) for k in range(time_steps-1)]) 
                     + 0.005*l1_regularization + rob_factor*adj_traj[-1].abs().sum()
-                    print('in l1 reg: |p(0)|^2',adj_traj[-1].abs().sum())
+                    print('in l1 reg: |p(0)|',adj_traj[-1].abs().sum())
                 else: #l2 controls
                     if self.fixed_projector: #maybe not needed
                         xd = torch.tensor([[6.0/0.8156, 0.5/(2*0.4525)] if x==1 else [-6.0/0.8156, -2.0/(2*0.4525)] for x in y_batch])
