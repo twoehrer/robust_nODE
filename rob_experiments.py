@@ -42,8 +42,8 @@ v_steps = 5
 
 
 training = True #train new network or load saved one
-num_epochs = 80 #number of optimization epochs for gradient decent
-rob_factor = [0.0001, 0.001, 0.002, 0.005]
+num_epochs = 100 #number of optimization epochs for gradient decent
+rob_factor = [0.00001, 0.0001, 0.001, 0.002, 0.005]
 
 fig_name = '1generalization_rob'
 
