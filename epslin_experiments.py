@@ -5,7 +5,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 from torch.utils.data import DataLoader,TensorDataset
 from plots.gifs import trajectory_gif
 from plots.plots import get_feature_history, plt_train_error, plt_norm_state, plt_norm_control, plt_classifier, feature_plot, plt_dataset
-from models.training import Trainer, robTrainer, epsTrainer
+from models.training import Trainer, robTrainer, epsTrainer, epslinTrainer
 from models.neural_odes import NeuralODE, robNeuralODE
 from models.resnets import ResNet
 # import pickle
@@ -21,8 +21,8 @@ from sklearn.model_selection import train_test_split
 
 
 torch.backends.cudnn.deterministic = True
-torch.manual_seed(1)
-torch.cuda.manual_seed(1)
+torch.manual_seed(2)
+torch.cuda.manual_seed(2)
 
 
 hidden_dim, data_dim = 2, 2 
@@ -44,8 +44,8 @@ v_steps = 5
 training = True #train new network or load saved one
 num_epochs = 80 #number of optimization epochs for gradient decent
 
-epsilons = [0., 0.05, 0.1]
-fig_name = '1dgeneralization_eps'
+epsilons = [0, 0.1, 0.5, 1]
+fig_name = '1alin_generalization_eps'
 
 
 
@@ -82,7 +82,7 @@ test = TensorDataset(X_test, y_test)
 
 
 g = torch.Generator()
-g.manual_seed(0)
+g.manual_seed(1)
 
 dataloader = DataLoader(data_line, batch_size=64, shuffle=shuffle, generator=g)
 dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=shuffle, generator = g)
@@ -92,38 +92,36 @@ dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=shuffle, generato
 #####model initializiation and training
 
 
-anode = NeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity=non_linearity, 
-                    architecture=architecture, T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
-optimizer_anode = torch.optim.Adam(anode.parameters(), lr=1e-3, weight_decay=weight_decay) #weight decay parameter modifies norm
-trainer_anode = Trainer(anode, optimizer_anode, device, cross_entropy=cross_entropy, 
-                        turnpike=turnpike, bound=bound, fixed_projector=fp, verbose = True)       
+# anode = NeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity=non_linearity, 
+#                     architecture=architecture, T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
+# optimizer_anode = torch.optim.Adam(anode.parameters(), lr=1e-3, weight_decay=weight_decay) #weight decay parameter modifies norm
+# trainer_anode = Trainer(anode, optimizer_anode, device, cross_entropy=cross_entropy, 
+#                         turnpike=turnpike, bound=bound, fixed_projector=fp, verbose = False)       
 
-trainer_anode.train(dataloader, num_epochs)
-plt_classifier(anode, data_line, test, num_steps=10, save_fig = '1generalization.png') 
+# trainer_anode.train(dataloader, num_epochs)
+# plt_classifier(anode, data_line, test, num_steps=10, save_fig = '1ageneralization.png') 
+
+# print('1generalization.png created')
+# #robust training
 
 
-#robust training
 
 
-
-# epsilons = [0.001]
-
-# for j in range(3):
 for eps in epsilons:
 
-    torch.manual_seed(1)
+    torch.manual_seed(2)
     
     eps_node = NeuralODE(device, data_dim, hidden_dim, adjoint = False, augment_dim=0, non_linearity=non_linearity, 
                                 architecture=architecture, T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
         
-    for name, param in eps_node.named_parameters():
-        i = 0
-        if param.requires_grad and i<2:
-            print(name, param.data)
-            i += 1
+    # for name, param in eps_node.named_parameters():
+    #     i = 0
+    #     if param.requires_grad and i<2:
+    #         print(name, param.data)
+    #         i += 1
 
     optimizer_node = torch.optim.Adam(eps_node.parameters(), lr=1e-3, weight_decay = weight_decay) #weight decay parameter modifies norm
-    trainer_eps_node = epsTrainer(eps_node, optimizer_node, device, cross_entropy = cross_entropy, 
+    trainer_eps_node = epslinTrainer(eps_node, optimizer_node, device, cross_entropy = cross_entropy, 
                             turnpike=turnpike, bound=bound, fixed_projector=fp, verbose = False, eps =  eps)
     trainer_eps_node.train(dataloader, num_epochs)
     

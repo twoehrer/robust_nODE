@@ -107,7 +107,7 @@ class Dynamics(nn.Module):
         """
         dt = self.T/self.time_steps
         k = int(t/dt)
-        k=0 #!!REMOVE
+        
         if self.architecture < 1:
             w_t = self.fc2_time[k].weight
             b_t = self.fc2_time[k].bias

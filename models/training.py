@@ -476,7 +476,9 @@ class epslinTrainer():
 
                     
                     y_pred, _ = self.model(x_batch)
-                    adj_term  = x_batch_grad.abs().sum()
+                    # adj_term = x_batch_grad.abs().sum() #maximal l_infty direction
+                    adj_term  = x_batch_grad.square().sum().sqrt() #maximal l2 direction 
+                
 
                     # print('y_eps', y_pred_eps)
                     # print('y_pred', y_pred)
