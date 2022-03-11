@@ -1,0 +1,4 @@
+ssh woehrer@131.188.55.92 
+source /home/np1/staff/woehrer/anaconda3/bin/activate
+cd FAUbox/Python/borjan\ dynamical.systems/
+conda activate neuralode2

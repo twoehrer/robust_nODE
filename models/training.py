@@ -460,7 +460,7 @@ class epslinTrainer():
                     
                     #Generate the sign gradient vector
                     loss.backward(retain_graph=True)
-                    x_batch_grad = x_batch.grad.data.sign()
+                    x_batch_grad = x_batch.grad.data
                     # print('grad size',x_batch_grad.size())
                     # print('size', x_batch.size())
                     
@@ -474,11 +474,18 @@ class epslinTrainer():
                     # loss += 0.005*loss_max.sum()
                     # print('loss',loss)
 
+                    y_pred_eps, _ = self.model(x_batch + eps * x_batch_grad)
+                  
+
+                    pert = 0.01
+                    diff = torch.abs(y_pred_eps - y_pred)
+                    cond = diff > pert
+                    x_batch_grad_eff = torch.where(cond, x_batch_grad, torch.tensor(0, dtype=x_batch_grad.dtype))
+
+                    adj_term  = x_batch_grad_eff.abs().sum() #norm() #maximal l2 direction 
+                    print(f'{adj_term = }')
+                    print(f'{loss = }')
                     
-                    y_pred, _ = self.model(x_batch)
-                    # adj_term = x_batch_grad.abs().sum() #maximal l_infty direction
-                    adj_term  = x_batch_grad.square().sum().sqrt() #maximal l2 direction 
-                
 
                     # print('y_eps', y_pred_eps)
                     # print('y_pred', y_pred)
