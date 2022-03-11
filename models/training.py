@@ -498,7 +498,7 @@ class epslinTrainer():
                     # y_eff = torch.where(cond, y_pred_eps, torch.tensor(0, dtype=y_pred_eps.dtype))
 
                     
-                    loss += 0.01 * eps * adj_term #was 0.005 before
+                    loss += eps * adj_term #was 0.005 before
             else:                                                       ## Augmented empirical risk minimization
                 if self.threshold>0: # l1 controls
                     l1_regularization = 0.

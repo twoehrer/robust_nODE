@@ -44,8 +44,8 @@ v_steps = 5
 training = True #train new network or load saved one
 num_epochs = 80 #number of optimization epochs for gradient decent
 
-epsilons = [0, 0.001, 0.01,  0.1]
-fig_name = '1elin_generalization_eps'
+epsilons = [0, 0.001, 0.01,  0.1, 1, 10]
+fig_name = '1flin_generalization_eps'
 
 
 
