@@ -256,8 +256,9 @@ class epsTrainer():
                     # loss_max = torch.tensor(0.)
                     
                     #Generate the sign gradient vector
-                    loss.backward(retain_graph=True)
+                    loss.backward() #previously here i had retain_graph=True. i am not sure why i thought i needed it
                     x_batch_grad = x_batch.grad.data.sign()
+                
                     # print('grad size',x_batch_grad.size())
                     # print('size', x_batch.size())
                     
@@ -271,20 +272,22 @@ class epsTrainer():
                     # loss += 0.005*loss_max.sum()
                     # print('loss',loss)
 
-                    y_pred_eps, _ = self.model(x_batch + eps * x_batch_grad)
-                    y_pred, _ = self.model(x_batch)
+                   
 
-                    # print('y_eps', y_pred_eps)
-                    # print('y_pred', y_pred)
-                    # print('abs', torch.abs(y_pred_eps - y_pred))
                     
+                    ###########################
                     #this should only add an extra loss to the batch items that differ from the unperturbed prediction more than pert
-                    pert = 0.01
-                    diff = torch.abs(y_pred_eps - y_pred)
-                    cond = diff > pert
-                    y_eff = torch.where(cond, y_pred_eps, torch.tensor(0, dtype=y_pred_eps.dtype))
+                    y_pred_eps, _ = self.model(x_batch + eps * x_batch_grad)
+                    # y_pred, _ = self.model(x_batch)
+                    
+                    # pert = 0.01
+                    # diff = torch.abs(y_pred_eps - y_pred)
+                    # cond = diff > pert
+                    # y_eff = torch.where(cond, y_pred_eps, torch.tensor(0, dtype=y_pred_eps.dtype))
+                    y_eff = y_pred_eps #comment this if you use other
+                    ############################
 
-                    print('y_eff', y_eff)
+                    # print('y_eff', y_eff)
                     loss += 0.01 * self.loss_func(y_eff, y_batch) #was 0.005 before
             else:                                                       ## Augmented empirical risk minimization
                 if self.threshold>0: # l1 controls
@@ -459,8 +462,11 @@ class epslinTrainer():
                     # loss_max = torch.tensor(0.)
                     
                     #Generate the sign gradient vector
-                    loss.backward(retain_graph=True)
-                    x_batch_grad = x_batch.grad.data
+                    loss_temp = self.loss_func(y_pred, y_batch)
+                    loss_temp.backward(retain_graph = True)
+                    x_batch_grad = x_batch.grad
+
+                    self.optimizer.zero_grad()
                     # print('grad size',x_batch_grad.size())
                     # print('size', x_batch.size())
                     
@@ -474,18 +480,25 @@ class epslinTrainer():
                     # loss += 0.005*loss_max.sum()
                     # print('loss',loss)
 
-                    y_pred_eps, _ = self.model(x_batch + eps * x_batch_grad)
+                    ##################
+                    
+                    # y_pred_eps, _ = self.model(x_batch + eps * x_batch_grad)
                   
 
-                    pert = 0.01
-                    diff = torch.abs(y_pred_eps - y_pred)
-                    cond = diff > pert
-                    x_batch_grad_eff = torch.where(cond, x_batch_grad, torch.tensor(0, dtype=x_batch_grad.dtype))
+                    # pert = 0.1
+                    # diff = torch.abs(y_pred_eps - y_pred)
+                    # cond = diff > pert
+                    # x_batch_grad_eff = torch.where(cond, x_batch_grad, torch.tensor(0, dtype=x_batch_grad.dtype))
 
-                    adj_term  = x_batch_grad_eff.abs().sum() #norm() #maximal l2 direction 
+                    # adj_term  = x_batch_grad_eff.abs().sum() #norm() #maximal l2 direction 
+                    adj_term = x_batch_grad.abs().sum()
+
                     print(f'{adj_term = }')
-                    print(f'{loss = }')
+                
+                    # print(f'{adj_term = }')
+                    # print(f'{loss = }')
                     
+                    #################
 
                     # print('y_eps', y_pred_eps)
                     # print('y_pred', y_pred)
@@ -497,8 +510,9 @@ class epslinTrainer():
                     # cond = diff > pert
                     # y_eff = torch.where(cond, y_pred_eps, torch.tensor(0, dtype=y_pred_eps.dtype))
 
-                    
-                    loss += eps * adj_term #was 0.005 before
+                    loss = (1-eps)*x_batch.sum() + eps * adj_term
+                    print(f'{loss=}')
+                    # loss = (1-eps) * loss + eps * adj_term #was 0.005 before
             else:                                                       ## Augmented empirical risk minimization
                 if self.threshold>0: # l1 controls
                     l1_regularization = 0.
@@ -517,7 +531,7 @@ class epslinTrainer():
                         ## beta=1.5 for point clouds, trapizoidal rule to integrate
                         beta = 1.75                      
                         loss = beta*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) 
-                                        for k in range(time_steps-1)])
+                                        for k in range(time_steps-1)]) 
             loss.backward()
             self.optimizer.step()
             

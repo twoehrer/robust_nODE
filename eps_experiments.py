@@ -42,10 +42,10 @@ v_steps = 5
 
 
 training = True #train new network or load saved one
-num_epochs = 80 #number of optimization epochs for gradient decent
+num_epochs = 80 #now used 80 as standard #number of optimization epochs for gradient decent
 
 epsilons = [0., 0.05, 0.1]
-fig_name = '1dgeneralization_eps'
+fig_name = '1fgeneralization_eps'
 
 
 
@@ -92,14 +92,14 @@ dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=shuffle, generato
 #####model initializiation and training
 
 
-anode = NeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity=non_linearity, 
-                    architecture=architecture, T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
-optimizer_anode = torch.optim.Adam(anode.parameters(), lr=1e-3, weight_decay=weight_decay) #weight decay parameter modifies norm
-trainer_anode = Trainer(anode, optimizer_anode, device, cross_entropy=cross_entropy, 
-                        turnpike=turnpike, bound=bound, fixed_projector=fp, verbose = True)       
+# anode = NeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity=non_linearity, 
+#                     architecture=architecture, T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
+# optimizer_anode = torch.optim.Adam(anode.parameters(), lr=1e-3, weight_decay=weight_decay) #weight decay parameter modifies norm
+# trainer_anode = Trainer(anode, optimizer_anode, device, cross_entropy=cross_entropy, 
+#                         turnpike=turnpike, bound=bound, fixed_projector=fp, verbose = True)       
 
-trainer_anode.train(dataloader, num_epochs)
-plt_classifier(anode, data_line, test, num_steps=10, save_fig = '1generalization.png') 
+# trainer_anode.train(dataloader, num_epochs)
+# plt_classifier(anode, data_line, test, num_steps=10, save_fig = '1generalization.png') 
 
 
 #robust training
@@ -116,11 +116,11 @@ for eps in epsilons:
     eps_node = NeuralODE(device, data_dim, hidden_dim, adjoint = False, augment_dim=0, non_linearity=non_linearity, 
                                 architecture=architecture, T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
         
-    for name, param in eps_node.named_parameters():
-        i = 0
-        if param.requires_grad and i<2:
-            print(name, param.data)
-            i += 1
+    # for name, param in eps_node.named_parameters():
+    #     i = 0
+    #     if param.requires_grad and i<2:
+    #         print(name, param.data)
+    #         i += 1
 
     optimizer_node = torch.optim.Adam(eps_node.parameters(), lr=1e-3, weight_decay = weight_decay) #weight decay parameter modifies norm
     trainer_eps_node = epsTrainer(eps_node, optimizer_node, device, cross_entropy = cross_entropy, 
@@ -140,10 +140,10 @@ for eps in epsilons:
 
 
 if training:
-    torch.save(anode.state_dict(), 'anode.pth')
+    # torch.save(anode.state_dict(), 'anode.pth')
     torch.save(eps_node.state_dict(), 'rob_node.pth')
 else:
-    anode.load_state_dict(torch.load('anode.pth'))
+    # anode.load_state_dict(torch.load('anode.pth'))
     eps_node.load_state_dict(torch.load('rob_node.pth'))
 
 
