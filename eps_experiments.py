@@ -42,10 +42,10 @@ v_steps = 5
 
 
 training = True #train new network or load saved one
-num_epochs = 80 #now used 80 as standard #number of optimization epochs for gradient decent
+num_epochs = 30 #now used 80 as standard #number of optimization epochs for gradient decent
 
-epsilons = [0., 0.05, 0.1]
-fig_name = '1fgeneralization_eps'
+epsilons = [0.]#, 0.05, 0.1 ,1]
+fig_name = '1ageneralization_eps'
 
 
 

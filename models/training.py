@@ -256,9 +256,11 @@ class epsTrainer():
                     # loss_max = torch.tensor(0.)
                     
                     #Generate the sign gradient vector
-                    loss.backward() #previously here i had retain_graph=True. i am not sure why i thought i needed it
-                    x_batch_grad = x_batch.grad.data.sign()
-                
+                    # loss.backward() #previously here i had retain_graph=True. i am not sure why i thought i needed it
+                    # x_batch_grad = x_batch.grad.data.sign()
+
+                    x_batch_grad = torch.autograd.grad(loss, x_batch, create_graph=True, retain_graph=True)[0]
+                    x_batch_grad = x_batch_grad.sign()
                     # print('grad size',x_batch_grad.size())
                     # print('size', x_batch.size())
                     
@@ -459,26 +461,9 @@ class epslinTrainer():
                 #adding perturbed trajectories
                 
                 if eps > 0.:
-                    # loss_max = torch.tensor(0.)
                     
-                    #Generate the sign gradient vector
-                    loss_temp = self.loss_func(y_pred, y_batch)
-                    loss_temp.backward(retain_graph = True)
-                    x_batch_grad = x_batch.grad
-
-                    self.optimizer.zero_grad()
-                    # print('grad size',x_batch_grad.size())
-                    # print('size', x_batch.size())
+                    x_batch_grad = torch.autograd.grad(loss, x_batch, create_graph=True, retain_graph=True)[0] #not sure if retrain_graph is necessary here
                     
-                    # for k in range(v_steps):
-                    #     y_eps, traj_eps = self.model(x_batch + eps*v[k]) #model for perturbed input
-                    #     loss_v = (traj_eps - traj).abs().sum(dim = 0) #for trapezoidal rule. endpoints not regarded atm
-                    #     loss_max = torch.maximum(loss_max,loss_v)
-                        # print('loss max', loss_max.sum())
-                        # print('loss_v', loss_v)
-                        # print('loss max',loss_max)
-                    # loss += 0.005*loss_max.sum()
-                    # print('loss',loss)
 
                     ##################
                     
@@ -491,9 +476,14 @@ class epslinTrainer():
                     # x_batch_grad_eff = torch.where(cond, x_batch_grad, torch.tensor(0, dtype=x_batch_grad.dtype))
 
                     # adj_term  = x_batch_grad_eff.abs().sum() #norm() #maximal l2 direction 
-                    adj_term = x_batch_grad.abs().sum()
+                    adj_term = x_batch_grad.square().sum()
+                    
+                    if i == 0:
+                        print(f'{x_batch[0]=}')
+                        print(f'{x_batch_grad[0]=}')
+                    # adj_term = x_batch_grad.norm()
 
-                    print(f'{adj_term = }')
+                    # print(f'{adj_term = }')
                 
                     # print(f'{adj_term = }')
                     # print(f'{loss = }')
@@ -510,8 +500,8 @@ class epslinTrainer():
                     # cond = diff > pert
                     # y_eff = torch.where(cond, y_pred_eps, torch.tensor(0, dtype=y_pred_eps.dtype))
 
-                    loss = (1-eps)*x_batch.sum() + eps * adj_term
-                    print(f'{loss=}')
+                    loss = (1-eps)*loss + eps * adj_term
+                    # print(f'{loss=}')
                     # loss = (1-eps) * loss + eps * adj_term #was 0.005 before
             else:                                                       ## Augmented empirical risk minimization
                 if self.threshold>0: # l1 controls
@@ -590,6 +580,25 @@ class epslinTrainer():
 
         return epoch_loss / len(data_loader)
 
+    def x_grad(self, x_batch, y_batch):
+        x_batch.requires_grad = True
+        x_batch_grad = torch.tensor(0.)
+        
+        y_pred, _ = self.model(x_batch)
+        loss = self.loss_func(y_pred, y_batch)
+
+        self.optimizer.zero_grad()
+        
+        
+        x_batch_grad = torch.autograd.grad(loss, x_batch)[0]
+        x_batch.requires_grad = False
+        return x_batch_grad
+
+        
+                
+
+                                             ## Classical empirical risk minimization
+                
 
 class robTrainer():
     """

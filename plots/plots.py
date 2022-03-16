@@ -323,7 +323,7 @@ def plt_dataset(inputs, targets, plot_range=(-2.0, 2.0), save_fig="dataset.pdf")
         plt.clf()
         plt.close()  
 
-def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201, footnote = None, save_fig='generalization.pdf'):
+def plt_classifier(model, trainer, data_line, test, plot_range=(-2.0, 2.0), num_steps=201, footnote = None, save_fig='generalization.pdf'):
     """
     Plots the final classifier; train and test data are superposed.
     Only for toy cloud data.
@@ -349,6 +349,13 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
         break    
     for test_inputs, test_targets in test_viz:
         break
+
+    inputs_grad = trainer.x_grad(inputs, targets)
+    inputs_grad = inputs_grad / inputs_grad.norm(dim=1).unsqueeze(dim=1)
+    inputs_grad = 0.5 * inputs_grad #rescale for picture and squeeze in right form
+
+    print(f'{inputs_grad = }')
+    print(f'{inputs = }')
     
     if False in (t < 2 for t in targets): 
         plot_range = (-2.5, 2.5)
@@ -402,6 +409,10 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
                         labelleft=False)
     
     plt.scatter(inputs[:,0], inputs[:,1], c=color, alpha=0.95, marker = 'o', linewidth=0.45, edgecolors='black', label='train')
+    
+    for i in range(len(inputs[:,0])):
+        plt.arrow(inputs[i, 0], inputs[i, 1], inputs_grad[i, 0], inputs_grad[i, 1], head_width=0.05, head_length=0.1, fc='k', ec='k')
+    
     plt.scatter(test_inputs[:,0], test_inputs[:, 1], c=test_color, alpha=0.95, marker='o', linewidth=1.75, edgecolors='black', label='test')
     fig.patch.set_facecolor('white')
     from matplotlib.lines import Line2D

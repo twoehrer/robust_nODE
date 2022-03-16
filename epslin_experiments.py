@@ -32,20 +32,22 @@ turnpike = False
 bound = 0.
 fp = False
 cross_entropy = True
-noise = 0.1 #0.05
+noise = 0.1
 shuffle = False
-non_linearity = 'relu' #'tanh'
+non_linearity = 'relu' #'sigmoid' #'tanh'
 architecture = 'bottleneck' #outside
 
 # eps = 0.01
 v_steps = 5
 
 
-training = True #train new network or load saved one
-num_epochs = 20 #number of optimization epochs for gradient decent
+save_model = True #train new network or load saved one
+pretrained = False
+num_epochs = 100 #80 #number of optimization epochs for gradient decent
 
-epsilons = [0, 0.01, 0.1, 0.5, 1]#, 0.0001, 0.001, 0.01]
-fig_name = '1dlin_generalization_eps'
+
+epsilons = [0, 0.01, 0.1, 0.5, 0.8, 1]#, 0.0001, 0.0002]#, 0.0001, 0.001, 0.01]
+fig_name = '1gen'
 
 
 
@@ -101,7 +103,7 @@ dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=shuffle, generato
 # trainer_anode.train(dataloader, num_epochs)
 # plt_classifier(anode, data_line, test, num_steps=10, save_fig = '1ageneralization.png') 
 
-# print('1generalization.png created')
+# print('1ageneralization.png created')
 # #robust training
 
 
@@ -110,9 +112,13 @@ dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=shuffle, generato
 for eps in epsilons:
 
     torch.manual_seed(2)
-    
+
     eps_node = NeuralODE(device, data_dim, hidden_dim, adjoint = False, augment_dim=0, non_linearity=non_linearity, 
                                 architecture=architecture, T=T, time_steps=num_steps, fixed_projector=fp, cross_entropy=cross_entropy)
+    if pretrained:
+        eps_node.load_state_dict(torch.load('rob_node.pth'))
+    
+        
         
     # for name, param in eps_node.named_parameters():
     #     i = 0
@@ -124,9 +130,20 @@ for eps in epsilons:
     trainer_eps_node = epslinTrainer(eps_node, optimizer_node, device, cross_entropy = cross_entropy, 
                             turnpike=turnpike, bound=bound, fixed_projector=fp, verbose = False, eps =  eps)
     trainer_eps_node.train(dataloader, num_epochs)
+
+    x_batch, y_batch = next(iter(dataloader_viz))
+    test_grad = trainer_eps_node.x_grad(x_batch, y_batch)
+    # print(f'{test_grad = }')
+    # test_grad = test_grad / test_grad.norm(dim=1).unsqueeze(dim=1)
+    # print(f'{test_grad = }')
+    # print(f'{test_grad.norm(dim=1)=}')
+
+    # print(f'{test_grad[:,1] = }')
+
+    # print(f'{x_batch = }')
     
     footnote = 'eps = {}, epochs = {}, data_noise = {}'.format(eps, num_epochs, noise)
-    plt_classifier(eps_node, data_line, test, num_steps=10, footnote = footnote, save_fig = '{}{}'.format(fig_name, eps) +'.png') 
+    plt_classifier(eps_node, trainer_eps_node, data_line, test, num_steps=10, footnote = footnote, save_fig = '{}{}'.format(fig_name, eps) +'.png') 
     print('{}{} created'.format(fig_name,eps))
 
 
@@ -137,11 +154,9 @@ for eps in epsilons:
 
 
 
-if training:
+if save_model:
     # torch.save(anode.state_dict(), 'anode.pth')
     torch.save(eps_node.state_dict(), 'rob_node.pth')
-else:
-    # anode.load_state_dict(torch.load('anode.pth'))
-    eps_node.load_state_dict(torch.load('rob_node.pth'))
+
 
 
