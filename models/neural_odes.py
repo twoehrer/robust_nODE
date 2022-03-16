@@ -21,10 +21,7 @@ MAX_NUM_STEPS = 1000
 
 
 def tanh_prime(input):
-    '''
-    Applies the Sigmoid Linear Unit (SiLU) function element-wise:
-        SiLU(x) = x * sigmoid(x)
-    '''
+    
     return 1 - torch.tanh(input) * torch.tanh(input) # use torch.sigmoid to make sure that we created the most efficient implemetation based on builtin PyTorch functions
 
 # create a class wrapper from PyTorch nn.Module, so
