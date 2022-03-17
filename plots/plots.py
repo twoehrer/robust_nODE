@@ -343,7 +343,7 @@ def plt_classifier(model, trainer, data_line, test, plot_range=(-2.0, 2.0), num_
 
 
     
-    dataloader_viz = DataLoader(data_line, batch_size=200, shuffle=False) #was 800
+    dataloader_viz = DataLoader(data_line, batch_size=80, shuffle=False) #was 200
     test_viz = DataLoader(test, batch_size = 80, shuffle=False) #was 80
     for inputs, targets in dataloader_viz:
         break    
@@ -351,11 +351,11 @@ def plt_classifier(model, trainer, data_line, test, plot_range=(-2.0, 2.0), num_
         break
 
     inputs_grad = trainer.x_grad(inputs, targets)
-    inputs_grad = inputs_grad / inputs_grad.norm(dim=1).unsqueeze(dim=1)
-    inputs_grad = 0.5 * inputs_grad #rescale for picture and squeeze in right form
+    # inputs_grad = inputs_grad / inputs_grad.norm(dim=1).unsqueeze(dim=1)
+    inputs_grad =  10* inputs_grad #rescale for picture and squeeze in right form
 
-    print(f'{inputs_grad = }')
-    print(f'{inputs = }')
+    # print(f'{inputs_grad = }')
+    # print(f'{inputs = }')
     
     if False in (t < 2 for t in targets): 
         plot_range = (-2.5, 2.5)
@@ -411,7 +411,7 @@ def plt_classifier(model, trainer, data_line, test, plot_range=(-2.0, 2.0), num_
     plt.scatter(inputs[:,0], inputs[:,1], c=color, alpha=0.95, marker = 'o', linewidth=0.45, edgecolors='black', label='train')
     
     for i in range(len(inputs[:,0])):
-        plt.arrow(inputs[i, 0], inputs[i, 1], inputs_grad[i, 0], inputs_grad[i, 1], head_width=0.05, head_length=0.1, fc='k', ec='k')
+        plt.arrow(inputs[i, 0], inputs[i, 1], inputs_grad[i, 0], inputs_grad[i, 1], head_width=0.05, head_length=0.1, fc='k', ec='k', alpha = 0.5)
     
     plt.scatter(test_inputs[:,0], test_inputs[:, 1], c=test_color, alpha=0.95, marker='o', linewidth=1.75, edgecolors='black', label='test')
     fig.patch.set_facecolor('white')

@@ -478,9 +478,7 @@ class epslinTrainer():
                     # adj_term  = x_batch_grad_eff.abs().sum() #norm() #maximal l2 direction 
                     adj_term = x_batch_grad.square().sum()
                     
-                    if i == 0:
-                        print(f'{x_batch[0]=}')
-                        print(f'{x_batch_grad[0]=}')
+                  
                     # adj_term = x_batch_grad.norm()
 
                     # print(f'{adj_term = }')
@@ -525,7 +523,7 @@ class epslinTrainer():
             loss.backward()
             self.optimizer.step()
             
-
+        
             
             
             clipper = WeightClipper(self.threshold)
@@ -582,6 +580,7 @@ class epslinTrainer():
 
     def x_grad(self, x_batch, y_batch):
         x_batch.requires_grad = True
+
         x_batch_grad = torch.tensor(0.)
         
         y_pred, _ = self.model(x_batch)

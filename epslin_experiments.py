@@ -41,13 +41,13 @@ architecture = 'bottleneck' #outside
 v_steps = 5
 
 
-save_model = True #train new network or load saved one
-pretrained = False
-num_epochs = 100 #80 #number of optimization epochs for gradient decent
+save_model = False #train new network or load saved one
+pretrained = True
+num_epochs = 20 #80 #number of optimization epochs for gradient decent
 
 
-epsilons = [0, 0.01, 0.1, 0.5, 0.8, 1]#, 0.0001, 0.0002]#, 0.0001, 0.001, 0.01]
-fig_name = '1gen'
+epsilons = [0.001]#, 0.01, 0.1, 0.5]#, 0.0001, 0.0002]#, 0.0001, 0.001, 0.01]
+fig_name = '1lingen'
 
 
 
@@ -129,28 +129,25 @@ for eps in epsilons:
     optimizer_node = torch.optim.Adam(eps_node.parameters(), lr=1e-3, weight_decay = weight_decay) #weight decay parameter modifies norm
     trainer_eps_node = epslinTrainer(eps_node, optimizer_node, device, cross_entropy = cross_entropy, 
                             turnpike=turnpike, bound=bound, fixed_projector=fp, verbose = False, eps =  eps)
-    trainer_eps_node.train(dataloader, num_epochs)
-
-    x_batch, y_batch = next(iter(dataloader_viz))
-    test_grad = trainer_eps_node.x_grad(x_batch, y_batch)
-    # print(f'{test_grad = }')
-    # test_grad = test_grad / test_grad.norm(dim=1).unsqueeze(dim=1)
-    # print(f'{test_grad = }')
-    # print(f'{test_grad.norm(dim=1)=}')
-
-    # print(f'{test_grad[:,1] = }')
-
-    # print(f'{x_batch = }')
     
-    footnote = 'eps = {}, epochs = {}, data_noise = {}'.format(eps, num_epochs, noise)
-    plt_classifier(eps_node, trainer_eps_node, data_line, test, num_steps=10, footnote = footnote, save_fig = '{}{}'.format(fig_name, eps) +'.png') 
-    print('{}{} created'.format(fig_name,eps))
+    epoch_count = num_epochs
+    picture_count = 0
+    while epoch_count >= 10:
+        picture_count += 1
+        trainer_eps_node.train(dataloader, 10)
+        epoch_count -= 10
 
+        footnote = 'picture_count = {}, eps = {}, epochs = {}, data_noise = {}'.format(picture_count, eps, num_epochs, noise)
+        plt_classifier(eps_node, trainer_eps_node, data_line, test, num_steps=10, footnote = footnote, save_fig = '{}{}'.format(fig_name, eps) +'.png') 
+        print('{}{} created'.format(fig_name,eps))
 
+    # trainer_eps_node.train(dataloader, num_epochs)
+  
+    
+    
+
+    
              
-
-
-
 
 
 
