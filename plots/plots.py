@@ -352,7 +352,7 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
     if trainer:
         inputs_grad = trainer.x_grad(inputs, targets)
     # inputs_grad = inputs_grad / inputs_grad.norm(dim=1).unsqueeze(dim=1)
-        inputs_grad =  100*inputs_grad #rescale for picture and squeeze in right form
+        inputs_grad =  10*inputs_grad #rescale for picture and squeeze in right form
 
     # print(f'{inputs_grad = }')
     # print(f'{inputs = }')
@@ -397,7 +397,7 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
     _y = np.linspace(plot_range[0], plot_range[1], num_steps)
         
     norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
-    fig = plt.figure()
+    fig = plt.figure(dpi = 500)
 
     X_new, Y_new = np.meshgrid(_x,_y)
     i = plt.contourf(X_new, Y_new, pred_grid, vmin=vmin, vmax=vmax, cmap=cmap, norm=norm, alpha=1)
@@ -530,3 +530,47 @@ def histories_plt(all_history_info, plot_type='loss', shaded_err=False,
         plt.savefig(save_fig, format='pdf', bbox_inches='tight')
         plt.clf()
         plt.close()
+
+
+from matplotlib.colors import to_rgba
+
+def visualize_classification(model, data, label, grad, eps = 0):
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    if isinstance(data, torch.Tensor):
+        data = data.cpu().numpy()
+    if isinstance(label, torch.Tensor):
+        label = label.cpu().numpy()
+    data_0 = data[label == 0]
+    data_1 = data[label == 1]
+
+    
+    
+    
+    fig = plt.figure(figsize=(4,4), dpi=500)
+    plt.scatter(data_0[:,0], data_0[:,1], edgecolor="#333", label="Class 0")
+    plt.scatter(data_1[:,0], data_1[:,1], edgecolor="#333", label="Class 1")
+    plt.title("Training with eps = {}".format(eps))
+    plt.ylabel(r"$x_2$")
+    plt.xlabel(r"$x_1$")
+    # plt.legend()
+
+    for i in range(len(data[:,0])):
+            plt.arrow(data[i, 0], data[i, 1], grad[i, 0], grad[i, 1], head_width=0.05, head_length=0.1, fc='k', ec='k', alpha = 0.5)
+    
+    # Let's make use of a lot of operations we have learned above
+    model.to(device)
+    c0 = torch.Tensor(to_rgba("C0")).to(device)
+    c1 = torch.Tensor(to_rgba("C1")).to(device)
+    x1 = torch.arange(-0.5, 1.5, step=0.01, device=device)
+    x2 = torch.arange(-0.5, 1.5, step=0.01, device=device)
+    xx1, xx2 = torch.meshgrid(x1, x2)  # Meshgrid function as in numpy
+    model_inputs = torch.stack([xx1, xx2], dim=-1)
+    preds = model(model_inputs)
+    preds = torch.sigmoid(preds)
+    output_image = (1 - preds) * c0[None,None] + preds * c1[None,None]  # Specifying "None" in a dimension creates a new one
+    output_image = output_image.cpu().numpy()  # Convert to numpy array. This only works for tensors on CPU, hence first push to CPU
+    plt.imshow(output_image, origin='lower', extent=(-0.5, 1.5, -0.5, 1.5))
+    plt.grid(False)
+    return fig

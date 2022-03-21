@@ -32,23 +32,23 @@ turnpike = False
 bound = 0.
 fp = False
 cross_entropy = True
-noise = 0.1
+noise = 0.05
 shuffle = False
 non_linearity = 'tanh' #'sigmoid' #'tanh'
-architecture = 'bottleneck' #outside
+architecture = 'inside' #outside #bottleneck
 
 # eps = 0.01
-v_steps = 5
+# v_steps = 5
 
 
 save_model = False #train new network or load saved one
 pretrained = False
-num_epochs = 80 #80 #number of optimization epochs for gradient decent
+num_epochs = 60 #80 #number of optimization epochs for gradient decent
 
-epsilons = [0]
-# epsilons = [0 , 0.0001, 0.00001]#, 0.01, 0.1, 0.5]#, 0.0001, 0.0002]#, 0.0001, 0.001, 0.01]
-fig_name = '1lingen'
-plot_steps = 20 #0 means only one plot is generated. plot_steps >0 means each plot_steps epochs one plot is generated
+# epsilons = [0]
+epsilons = [0 , 0.2, 0.5, 0.7]#, 0.01, 0.1, 0.5]#, 0.0001, 0.0002]#, 0.0001, 0.001, 0.01]
+fig_name = '1alingen'
+plot_steps = 10 #0 means only one plot is generated. plot_steps >0 means each plot_steps epochs one plot is generated
 
 
 
