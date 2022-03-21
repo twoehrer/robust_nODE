@@ -323,7 +323,7 @@ def plt_dataset(inputs, targets, plot_range=(-2.0, 2.0), save_fig="dataset.pdf")
         plt.clf()
         plt.close()  
 
-def plt_classifier(model, trainer, data_line, test, plot_range=(-2.0, 2.0), num_steps=201, footnote = None, save_fig='generalization.pdf'):
+def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201, footnote = None, save_fig='generalization.pdf', trainer=None):
     """
     Plots the final classifier; train and test data are superposed.
     Only for toy cloud data.
@@ -343,16 +343,16 @@ def plt_classifier(model, trainer, data_line, test, plot_range=(-2.0, 2.0), num_
 
 
     
-    dataloader_viz = DataLoader(data_line, batch_size=80, shuffle=False) #was 200
+    dataloader_viz = DataLoader(data_line, batch_size=400, shuffle=False) #was 200
     test_viz = DataLoader(test, batch_size = 80, shuffle=False) #was 80
     for inputs, targets in dataloader_viz:
         break    
     for test_inputs, test_targets in test_viz:
         break
-
-    inputs_grad = trainer.x_grad(inputs, targets)
+    if trainer:
+        inputs_grad = trainer.x_grad(inputs, targets)
     # inputs_grad = inputs_grad / inputs_grad.norm(dim=1).unsqueeze(dim=1)
-    inputs_grad =  10* inputs_grad #rescale for picture and squeeze in right form
+        inputs_grad =  100*inputs_grad #rescale for picture and squeeze in right form
 
     # print(f'{inputs_grad = }')
     # print(f'{inputs = }')
@@ -410,10 +410,11 @@ def plt_classifier(model, trainer, data_line, test, plot_range=(-2.0, 2.0), num_
     
     plt.scatter(inputs[:,0], inputs[:,1], c=color, alpha=0.95, marker = 'o', linewidth=0.45, edgecolors='black', label='train')
     
-    for i in range(len(inputs[:,0])):
-        plt.arrow(inputs[i, 0], inputs[i, 1], inputs_grad[i, 0], inputs_grad[i, 1], head_width=0.05, head_length=0.1, fc='k', ec='k', alpha = 0.5)
+    if trainer:
+        for i in range(len(inputs[:,0])):
+            plt.arrow(inputs[i, 0], inputs[i, 1], inputs_grad[i, 0], inputs_grad[i, 1], head_width=0.05, head_length=0.1, fc='k', ec='k', alpha = 0.5)
     
-    plt.scatter(test_inputs[:,0], test_inputs[:, 1], c=test_color, alpha=0.95, marker='o', linewidth=1.75, edgecolors='black', label='test')
+    # plt.scatter(test_inputs[:,0], test_inputs[:, 1], c=test_color, alpha=0.95, marker='o', linewidth=1.75, edgecolors='black', label='test')
     fig.patch.set_facecolor('white')
     from matplotlib.lines import Line2D
     legend_elements = [Line2D([0], [0], marker='o', color='w', mew=0.45, mec='black', label='train',
@@ -428,10 +429,13 @@ def plt_classifier(model, trainer, data_line, test, plot_range=(-2.0, 2.0), num_
     plt.figtext(0.5, 0.01, footnote, ha="center", fontsize=10)
 
     if len(save_fig):
-        plt.savefig(save_fig, bbox_inches='tight') #format='png'
+        plt.savefig(save_fig, bbox_inches='tight', dpi = 300) #format='png'
         # plt.show()
         plt.clf()
         plt.close()
+
+
+
 
 def get_feature_history(trainer, dataloader, inputs, targets, num_epochs):
     

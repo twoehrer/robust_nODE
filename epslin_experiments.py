@@ -26,7 +26,7 @@ torch.cuda.manual_seed(2)
 
 
 hidden_dim, data_dim = 2, 2 
-T, num_steps = 5.0, 20  #T is the end time, num_steps are the amount of discretization steps for the ODE solver
+T, num_steps = 5.0, 4 #20 before  #T is the end time, num_steps are the amount of discretization steps for the ODE solver
 dt = T/num_steps
 turnpike = False
 bound = 0.
@@ -34,7 +34,7 @@ fp = False
 cross_entropy = True
 noise = 0.1
 shuffle = False
-non_linearity = 'relu' #'sigmoid' #'tanh'
+non_linearity = 'tanh' #'sigmoid' #'tanh'
 architecture = 'bottleneck' #outside
 
 # eps = 0.01
@@ -42,13 +42,13 @@ v_steps = 5
 
 
 save_model = False #train new network or load saved one
-pretrained = True
-num_epochs = 20 #80 #number of optimization epochs for gradient decent
+pretrained = False
+num_epochs = 200 #80 #number of optimization epochs for gradient decent
 
-
-epsilons = [0.001]#, 0.01, 0.1, 0.5]#, 0.0001, 0.0002]#, 0.0001, 0.001, 0.01]
+epsilons = [0]
+# epsilons = [0 , 0.0001, 0.00001]#, 0.01, 0.1, 0.5]#, 0.0001, 0.0002]#, 0.0001, 0.001, 0.01]
 fig_name = '1lingen'
-
+plot_steps = 20 #0 means only one plot is generated. plot_steps >0 means each plot_steps epochs one plot is generated
 
 
 
@@ -91,7 +91,7 @@ dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=shuffle, generato
 
 
 
-#####model initializiation and training
+####model initializiation and training
 
 
 # anode = NeuralODE(device, data_dim, hidden_dim, augment_dim=0, non_linearity=non_linearity, 
@@ -107,7 +107,7 @@ dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=shuffle, generato
 # #robust training
 
 
-
+sort_num = 1
 
 for eps in epsilons:
 
@@ -130,16 +130,18 @@ for eps in epsilons:
     trainer_eps_node = epslinTrainer(eps_node, optimizer_node, device, cross_entropy = cross_entropy, 
                             turnpike=turnpike, bound=bound, fixed_projector=fp, verbose = False, eps =  eps)
     
-    epoch_count = num_epochs
-    picture_count = 0
-    while epoch_count >= 10:
-        picture_count += 1
-        trainer_eps_node.train(dataloader, 10)
-        epoch_count -= 10
+    if plot_steps == 0:
+        plot_steps = num_epochs
 
-        footnote = 'picture_count = {}, eps = {}, epochs = {}, data_noise = {}'.format(picture_count, eps, num_epochs, noise)
-        plt_classifier(eps_node, trainer_eps_node, data_line, test, num_steps=10, footnote = footnote, save_fig = '{}{}'.format(fig_name, eps) +'.png') 
-        print('{}{} created'.format(fig_name,eps))
+    for h, i in enumerate(range(1,num_epochs+1, plot_steps)):
+    
+        trainer_eps_node.train(dataloader, plot_steps)
+
+        fig_name_plot = fig_name + str(sort_num) + '_' + str(eps) + '_' + str(h)
+        footnote = 'plot_count = {}, eps = {}, epochs = {}, data_noise = {}'.format(i, eps, num_epochs, noise)
+        plt_classifier(eps_node,  data_line, test, num_steps=10, trainer = trainer_eps_node, footnote = footnote, save_fig = '{}'.format(fig_name_plot) +'.png') 
+        print('{} created'.format(fig_name_plot))
+        sort_num += 1
 
     # trainer_eps_node.train(dataloader, num_epochs)
   

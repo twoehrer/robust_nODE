@@ -124,3 +124,4 @@ for X, y in datasets:
 
 figure.subplots_adjust(left=0.02, right=0.98)
 plt.show()
+plt.savefig('test', bbox_inches='tight', dpi = 300) #format='png'
