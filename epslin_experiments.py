@@ -26,7 +26,7 @@ torch.cuda.manual_seed(2)
 
 
 hidden_dim, data_dim = 2, 2 
-T, num_steps = 5.0, 4 #20 before  #T is the end time, num_steps are the amount of discretization steps for the ODE solver
+T, num_steps = 5.0, 5 #20 before  #T is the end time, num_steps are the amount of discretization steps for the ODE solver
 dt = T/num_steps
 turnpike = False
 bound = 0.
@@ -43,7 +43,7 @@ v_steps = 5
 
 save_model = False #train new network or load saved one
 pretrained = False
-num_epochs = 200 #80 #number of optimization epochs for gradient decent
+num_epochs = 80 #80 #number of optimization epochs for gradient decent
 
 epsilons = [0]
 # epsilons = [0 , 0.0001, 0.00001]#, 0.01, 0.1, 0.5]#, 0.0001, 0.0002]#, 0.0001, 0.001, 0.01]
