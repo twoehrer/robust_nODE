@@ -402,3 +402,21 @@ class robNeuralODE(nn.Module):
             return features, pred
         return pred, self.proj_traj
 
+
+def grad_loss_inputs(model, optimizer, data_inputs, data_labels, loss_module):
+    data_inputs.requires_grad = True
+
+    data_inputs_grad = torch.tensor(0.)
+    
+    preds, _ = model(data_inputs)
+    print('pred size', preds.type())
+    # preds = preds.squeeze(dim=1)
+
+    loss = loss_module(preds, data_labels)
+
+    optimizer.zero_grad()
+    
+    
+    data_inputs_grad = torch.autograd.grad(loss, data_inputs)[0]
+    data_inputs.requires_grad = False
+    return data_inputs_grad

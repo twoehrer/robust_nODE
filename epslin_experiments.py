@@ -4,7 +4,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 from torch.utils.data import DataLoader,TensorDataset
 from plots.gifs import trajectory_gif
-from plots.plots import get_feature_history, plt_train_error, plt_norm_state, plt_norm_control, plt_classifier, feature_plot, plt_dataset
+from plots.plots import get_feature_history, plt_train_error, plt_norm_state, plt_norm_control, plt_classifier, feature_plot, plt_dataset, visualize_classification
 from models.training import Trainer, robTrainer, epsTrainer, epslinTrainer
 from models.neural_odes import NeuralODE, robNeuralODE
 from models.resnets import ResNet
@@ -17,6 +17,8 @@ import math
 from sklearn.datasets import make_moons, make_circles
 from sklearn.model_selection import train_test_split
 
+
+import torch.nn as nn
 #if training = False, models will be loaded from file
 
 
@@ -43,12 +45,12 @@ architecture = 'inside' #outside #bottleneck
 
 save_model = False #train new network or load saved one
 pretrained = False
-num_epochs = 60 #80 #number of optimization epochs for gradient decent
+num_epochs = 50 #80 #number of optimization epochs for gradient decent
 
-# epsilons = [0]
-epsilons = [0 , 0.2, 0.5, 0.7]#, 0.01, 0.1, 0.5]#, 0.0001, 0.0002]#, 0.0001, 0.001, 0.01]
+epsilons = [0]
+# epsilons = [0 , 0.2, 0.5, 0.7]#, 0.01, 0.1, 0.5]#, 0.0001, 0.0002]#, 0.0001, 0.001, 0.01]
 fig_name = '1alingen'
-plot_steps = 10 #0 means only one plot is generated. plot_steps >0 means each plot_steps epochs one plot is generated
+plot_steps = 0 #0 means only one plot is generated. plot_steps >0 means each plot_steps epochs one plot is generated
 
 
 
@@ -145,8 +147,32 @@ for eps in epsilons:
 
     # trainer_eps_node.train(dataloader, num_epochs)
   
+
+def grad_data_inputs(model, optimizer, data_inputs, data_labels, loss_module):
+    data_inputs.requires_grad = True
+
+    data_inputs_grad = torch.tensor(0.)
+    
+    preds, _ = model(data_inputs)
+    print('pred size', preds.type())
+    # preds = preds.squeeze(dim=1)
+
+    loss = loss_module(preds, data_labels)
+
+    optimizer.zero_grad()
     
     
+    data_inputs_grad = torch.autograd.grad(loss, data_inputs)[0]
+    data_inputs.requires_grad = False
+    return data_inputs_grad
+
+
+loss = trainer_eps_node.loss_func
+    
+for (x_batch, y_batch) in dataloader_viz:
+    grad = grad_data_inputs(eps_node, optimizer_node, x_batch, y_batch, loss)
+    visualize_classification(eps_node, x_batch, y_batch, 10*grad, eps = 0)
+    break
 
     
              

@@ -470,6 +470,7 @@ def histories_plt(all_history_info, plot_type='loss', shaded_err=False,
 
         if len(time_per_epoch):
             xlabel = "Time (seconds)"
+
         else:
             xlabel = "Epochs"
 
@@ -496,6 +497,7 @@ def histories_plt(all_history_info, plot_type='loss', shaded_err=False,
                                     mean_history + std_history, facecolor=color,
                                     alpha=0.5)
                 plt.fill_between(epochs, mean_history_val - std_history_val,
+
                                     mean_history_val + std_history_val, facecolor=color_val,
                                     alpha=0.5)
                 
@@ -534,6 +536,7 @@ def histories_plt(all_history_info, plot_type='loss', shaded_err=False,
 
 from matplotlib.colors import to_rgba
 
+@torch.no_grad()
 def visualize_classification(model, data, label, grad, eps = 0):
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -563,14 +566,22 @@ def visualize_classification(model, data, label, grad, eps = 0):
     model.to(device)
     c0 = torch.Tensor(to_rgba("C0")).to(device)
     c1 = torch.Tensor(to_rgba("C1")).to(device)
-    x1 = torch.arange(-0.5, 1.5, step=0.01, device=device)
-    x2 = torch.arange(-0.5, 1.5, step=0.01, device=device)
+    x1 = torch.arange(-1.5, 1.5, step=0.01, device=device)
+    x2 = torch.arange(-1.5, 1.5, step=0.01, device=device)
     xx1, xx2 = torch.meshgrid(x1, x2)  # Meshgrid function as in numpy
     model_inputs = torch.stack([xx1, xx2], dim=-1)
-    preds = model(model_inputs)
-    preds = torch.sigmoid(preds)
-    output_image = (1 - preds) * c0[None,None] + preds * c1[None,None]  # Specifying "None" in a dimension creates a new one
+    preds, _ = model(model_inputs)
+    m = nn.Softmax(dim = 2)
+    preds = m(preds) #softmax normalizes the model predictions to probabilities
+    print(f'{preds = }')
+    
+    preds = preds[:,:,0] #now we want to only have the probability for being in class1 (as prob for class2 is then 1- class1)
+    preds = preds.unsqueeze(2)
+    print(f'{preds = }')
+    output_image = (1 - preds) * c1[None,None] + preds * c0[None,None]  # Specifying "None" in a dimension creates a new one
     output_image = output_image.cpu().numpy()  # Convert to numpy array. This only works for tensors on CPU, hence first push to CPU
-    plt.imshow(output_image, origin='lower', extent=(-0.5, 1.5, -0.5, 1.5))
+    plt.imshow(output_image, origin='lower', extent=(-1.5, 1.5, -1.5, 1.5))
     plt.grid(False)
+
+    plt.savefig('test.png', bbox_inches='tight', dpi = 300) #format='png'
     return fig
