@@ -476,8 +476,8 @@ class epslinTrainer():
                     # x_batch_grad_eff = torch.where(cond, x_batch_grad, torch.tensor(0, dtype=x_batch_grad.dtype))
 
                     # adj_term  = x_batch_grad_eff.abs().sum() #norm() #maximal l2 direction 
-                    adj_term = x_batch_grad.square().sum()
-                    
+                    # adj_term = x_batch_grad.square().sum()
+                    adj_term = x_batch_grad.abs().sum()
                   
                     # adj_term = x_batch_grad.norm()
 
@@ -532,7 +532,8 @@ class epslinTrainer():
             
             if self.cross_entropy:
                 epoch_loss += self.loss_func(traj[-1], y_batch).item()   
-                m = nn.Softmax()
+                m = nn.Softmax(dim = 1)
+                # print(y_pred.size())
                 softpred = m(y_pred)
                 softpred = torch.argmax(softpred, 1)  
                 epoch_acc += (softpred == y_batch).sum().item()/(y_batch.size(0))       

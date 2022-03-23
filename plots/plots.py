@@ -343,7 +343,7 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
 
 
     
-    dataloader_viz = DataLoader(data_line, batch_size=400, shuffle=False) #was 200
+    dataloader_viz = DataLoader(data_line, batch_size=128, shuffle=False) #was 200
     test_viz = DataLoader(test, batch_size = 80, shuffle=False) #was 80
     for inputs, targets in dataloader_viz:
         break    
@@ -385,7 +385,7 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
         vmin, vmax = -1.05, 1.05
     else:
         pre_, traj = model(grid)
-        m = nn.Softmax()
+        m = nn.Softmax(dim = 1)
         predictions = m(pre_)
         predictions = torch.argmax(predictions, 1)
         vmin = 0.0
@@ -430,7 +430,7 @@ def plt_classifier(model, data_line, test, plot_range=(-2.0, 2.0), num_steps=201
 
     if len(save_fig):
         plt.savefig(save_fig, bbox_inches='tight', dpi = 300) #format='png'
-        # plt.show()
+        plt.show()
         plt.clf()
         plt.close()
 
@@ -537,7 +537,7 @@ def histories_plt(all_history_info, plot_type='loss', shaded_err=False,
 from matplotlib.colors import to_rgba
 
 @torch.no_grad()
-def visualize_classification(model, data, label, grad, eps = 0):
+def visualize_classification(model, data, label, grad, fig_name = None, footnote = None):
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -551,12 +551,13 @@ def visualize_classification(model, data, label, grad, eps = 0):
     
     
     
-    fig = plt.figure(figsize=(4,4), dpi=500)
+    fig = plt.figure(figsize=(5,4), dpi=300)
     plt.scatter(data_0[:,0], data_0[:,1], edgecolor="#333", label="Class 0")
     plt.scatter(data_1[:,0], data_1[:,1], edgecolor="#333", label="Class 1")
-    plt.title("Training with eps = {}".format(eps))
+    
     plt.ylabel(r"$x_2$")
     plt.xlabel(r"$x_1$")
+    plt.figtext(0.5, -0.05, footnote, ha="center", fontsize=10)
     # plt.legend()
 
     for i in range(len(data[:,0])):
@@ -564,24 +565,22 @@ def visualize_classification(model, data, label, grad, eps = 0):
     
     # Let's make use of a lot of operations we have learned above
     model.to(device)
-    c0 = torch.Tensor(to_rgba("C0")).to(device)
+    c0 = torch.Tensor(to_rgba("C0")).to(device)  #creates the RGB values of the two scatter plot colors.
     c1 = torch.Tensor(to_rgba("C1")).to(device)
-    x1 = torch.arange(-1.5, 1.5, step=0.01, device=device)
-    x2 = torch.arange(-1.5, 1.5, step=0.01, device=device)
+    x1 = torch.arange(-2, 2, step=0.01, device=device)
+    x2 = torch.arange(-2, 2, step=0.01, device=device)
     xx1, xx2 = torch.meshgrid(x1, x2)  # Meshgrid function as in numpy
     model_inputs = torch.stack([xx1, xx2], dim=-1)
     preds, _ = model(model_inputs)
-    m = nn.Softmax(dim = 2)
+    m = nn.Softmax(dim = 2) #dim = 2 means that it normalizes along the last dimension, i.e. along the two predictions that are the model output
     preds = m(preds) #softmax normalizes the model predictions to probabilities
-    print(f'{preds = }')
     
-    preds = preds[:,:,0] #now we want to only have the probability for being in class1 (as prob for class2 is then 1- class1)
-    preds = preds.unsqueeze(2)
-    print(f'{preds = }')
-    output_image = (1 - preds) * c1[None,None] + preds * c0[None,None]  # Specifying "None" in a dimension creates a new one
+    preds = preds[:,:,0] #now we only want to have the probability for being in class1 (as prob for class2 is then 1- class1)
+    preds = preds.unsqueeze(2) #adds a tensor dimension at position 2
+    output_image = (1 - preds) * c1[None,None] + preds * c0[None,None]  # Specifying "None" in a dimension creates a new one. The rgb values hence get rescaled according to the prediction
     output_image = output_image.cpu().numpy()  # Convert to numpy array. This only works for tensors on CPU, hence first push to CPU
-    plt.imshow(output_image, origin='lower', extent=(-1.5, 1.5, -1.5, 1.5))
+    plt.imshow(output_image, origin='lower', extent=(-2, 2, -2, 2))
     plt.grid(False)
 
-    plt.savefig('test.png', bbox_inches='tight', dpi = 300) #format='png'
+    plt.savefig(fig_name, bbox_inches='tight', dpi = 300) #format='png'
     return fig
