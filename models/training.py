@@ -477,7 +477,7 @@ class epslinTrainer():
 
                     # adj_term  = x_batch_grad_eff.abs().sum() #norm() #maximal l2 direction 
                     # adj_term = x_batch_grad.square().sum()
-                    adj_term = x_batch_grad.abs().sum()
+                    adj_term = x_batch_grad.abs().sum() #this corresponds to l1 maxim
                   
                     # adj_term = x_batch_grad.norm()
 
