@@ -177,7 +177,7 @@ class epsTrainer():
     """
     def __init__(self, model, optimizer, device, cross_entropy=True,
                  print_freq=10, record_freq=10, verbose=True, save_dir=None, 
-                 turnpike=True, bound=0., fixed_projector=False, eps = 0.01):
+                 turnpike=True, bound=0., fixed_projector=False, eps = 0.01, alpha = 0.01):
         self.model = model
         self.optimizer = optimizer
         self.cross_entropy = cross_entropy
@@ -203,6 +203,7 @@ class epsTrainer():
         self.buffer = {'loss': [], 'accuracy': []}
         self.is_resnet = hasattr(self.model, 'num_layers')
         self.eps = eps
+        self.alpha = alpha #strength of robustness term
 
     def train(self, data_loader, num_epochs):
         for epoch in range(num_epochs):
@@ -217,6 +218,7 @@ class epsTrainer():
         v_steps = 5
         v = torch.zeros(v_steps,2)
         eps = self.eps
+        alpha = self.alpha
         loss_max = torch.tensor(0.)
 
 
@@ -290,7 +292,7 @@ class epsTrainer():
                     ############################
 
                     # print('y_eff', y_eff)
-                    loss += 0.01 * self.loss_func(y_eff, y_batch) #was 0.005 before
+                    loss = (1-alpha) * loss + alpha * self.loss_func(y_eff, y_batch) #was 0.005 before
             else:                                                       ## Augmented empirical risk minimization
                 if self.threshold>0: # l1 controls
                     l1_regularization = 0.
@@ -475,10 +477,7 @@ class epslinTrainer():
                     # cond = diff > pert
                     # x_batch_grad_eff = torch.where(cond, x_batch_grad, torch.tensor(0, dtype=x_batch_grad.dtype))
 
-                    # adj_term  = x_batch_grad_eff.abs().sum() #norm() #maximal l2 direction 
-                    # adj_term = x_batch_grad.square().sum()
                     adj_term = x_batch_grad.abs().sum() #this corresponds to l1 maxim
-                  
                     # adj_term = x_batch_grad.norm()
 
                     # print(f'{adj_term = }')
