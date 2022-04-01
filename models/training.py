@@ -8,6 +8,7 @@ import torch.nn as nn
 from numpy import mean
 import torch
 import math
+from torch.utils.tensorboard import SummaryWriter
 
 losses = {'mse': nn.MSELoss(), 
           'cross_entropy': nn.CrossEntropyLoss(), 
@@ -413,6 +414,9 @@ class epslinTrainer():
         self.buffer = {'loss': [], 'accuracy': []}
         self.is_resnet = hasattr(self.model, 'num_layers')
         self.eps = eps
+        
+        # logging_dir='runs/our_experiment'
+        # writer = SummaryWriter(logging_dir)
 
     def train(self, data_loader, num_epochs):
         for epoch in range(num_epochs):
@@ -436,6 +440,7 @@ class epslinTrainer():
         #     v[k] = torch.tensor([torch.sin(t),torch.cos(t)])
     #generate perturbed directions
         x_batch_grad = torch.tensor(0.)
+        
         for i, (x_batch, y_batch) in enumerate(data_loader):
                 # if i == 0:
                 #     print('first data batch', x_batch[0], y_batch[0])
@@ -469,27 +474,11 @@ class epslinTrainer():
 
                     ##################
                     
-                    # y_pred_eps, _ = self.model(x_batch + eps * x_batch_grad)
-                  
 
-                    # pert = 0.1
-                    # diff = torch.abs(y_pred_eps - y_pred)
-                    # cond = diff > pert
-                    # x_batch_grad_eff = torch.where(cond, x_batch_grad, torch.tensor(0, dtype=x_batch_grad.dtype))
+                    adj_term = x_batch_grad.abs().sum() #this corresponds to linfty
+                    # adj_term = x_batch_grad.norm() #this corresponds to l2 max
 
-                    adj_term = x_batch_grad.abs().sum() #this corresponds to l1 maxim
-                    # adj_term = x_batch_grad.norm()
-
-                    # print(f'{adj_term = }')
-                
-                    # print(f'{adj_term = }')
-                    # print(f'{loss = }')
                     
-                    #################
-
-                    # print('y_eps', y_pred_eps)
-                    # print('y_pred', y_pred)
-                    # print('abs', torch.abs(y_pred_eps - y_pred))
                     
                     #this should only add an extra loss to the batch items that differ from the unperturbed prediction more than pert
                     # pert = 0.01
