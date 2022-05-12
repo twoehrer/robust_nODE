@@ -5,7 +5,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 from torch.utils.data import DataLoader,TensorDataset
 from plots.gifs import trajectory_gif
 from plots.plots import get_feature_history, plt_train_error, plt_norm_state, plt_norm_control, plt_classifier, feature_plot, plt_dataset, visualize_classification
-from models.training import Trainer, robTrainer, epsTrainer, epslinTrainer
+from models.training import Trainer, robTrainer, epsTrainer, doublebackTrainer
 from models.neural_odes import NeuralODE, robNeuralODE
 from models.resnets import ResNet
 # import pickle
@@ -129,7 +129,7 @@ for eps in epsilons:
     #         i += 1
 
     optimizer_node = torch.optim.Adam(eps_node.parameters(), lr=1e-3, weight_decay = weight_decay) #weight decay parameter modifies norm
-    trainer_eps_node = epslinTrainer(eps_node, optimizer_node, device, cross_entropy = cross_entropy, 
+    trainer_eps_node = doublebackTrainer(eps_node, optimizer_node, device, cross_entropy = cross_entropy, 
                             turnpike=turnpike, bound=bound, fixed_projector=fp, verbose = False, eps =  eps)
     
     if plot_steps == 0:

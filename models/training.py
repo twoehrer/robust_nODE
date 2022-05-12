@@ -372,7 +372,7 @@ class epsTrainer():
         return epoch_loss / len(data_loader)
 
 
-class epslinTrainer():
+class doublebackTrainer():
     """
     Given an optimizer, we write the training loop for minimizing the functional.
     We need several hyperparameters to define the different functionals.

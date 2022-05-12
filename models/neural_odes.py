@@ -102,7 +102,7 @@ class Dynamics(nn.Module):
         """
         The output of the class -> f(x(t), u(t)).
         """
-        dt = self.T/self.time_steps
+        dt = self.T/(self.time_steps - 1)  #here was no -1 before which is a mistake
         k = int(t/dt)
         
         if self.architecture < 1:
