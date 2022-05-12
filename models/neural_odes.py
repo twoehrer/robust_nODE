@@ -223,7 +223,7 @@ class Semiflow(nn.Module):  #this should allow to calculate the flow for dot(x) 
         
 
 
-    def forward(self, x, eval_times=None): #i probably need to add a p argument here
+    def forward(self, x, eval_times=None):
     
         dt = self.T/self.time_steps
 

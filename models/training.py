@@ -484,13 +484,6 @@ class epslinTrainer():
                     adj_term = x_batch_grad.abs().sum() #this corresponds to linfty
                     # adj_term = x_batch_grad.norm() #this corresponds to l2 max
 
-                    
-                    
-                    #this should only add an extra loss to the batch items that differ from the unperturbed prediction more than pert
-                    # pert = 0.01
-                    # diff = torch.abs(y_pred_eps - y_pred)
-                    # cond = diff > pert
-                    # y_eff = torch.where(cond, y_pred_eps, torch.tensor(0, dtype=y_pred_eps.dtype))
 
                     loss = (1-eps)*loss + eps * adj_term
                     # print(f'{loss=}')
