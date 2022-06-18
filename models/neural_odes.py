@@ -101,8 +101,10 @@ class Dynamics(nn.Module):
     def forward(self, t, x):
         """
         The output of the class -> f(x(t), u(t)).
+        f(x(t), u(t)) = f(x,u^k)
+        
         """
-        dt = self.T/(self.time_steps - 1)  #here was no -1 before which is a mistake
+        dt = self.T/(self.time_steps - 1)  #here was no -1 before which does not fit with adjoint solver otherwise
         k = int(t/dt)
         
         if self.architecture < 1:
@@ -184,7 +186,7 @@ class adj_Dynamics(nn.Module):
         x = self.x_traj[time_steps - k - 1]
         #print('w_t',w_t.size(),'b_t', b_t.size(), 'x', x.size(), 'x_traj', self.x_traj.size(), 'p', p.size())
          # calculation of -Dxg(u(t),x(t))p
-        out = torch.matmul(x, w_t.t()) + b_t  #this does matrix vector multiplication for each k: w_t[k]*x
+        out = torch.matmul(x, w_t.t()) + b_t  #this performs matrix vector multiplication for each k: w_t[k]*x
         out = self.non_linearity(out)
         out = torch.diag_embed(out)
         out = torch.matmul(w_t.t(),out)  #this was not transposed before

@@ -449,7 +449,8 @@ class doublebackTrainer():
             x_batch = x_batch.to(self.device)
             y_batch = y_batch.to(self.device)
             
-            x_batch.requires_grad = True #i need this for Fast sign gradient method
+            if eps > 0:
+                x_batch.requires_grad = True #i need this for Fast sign gradient method
             
             if not self.is_resnet:
                 y_pred, traj = self.model(x_batch)   
