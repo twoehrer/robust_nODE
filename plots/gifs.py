@@ -18,7 +18,7 @@ def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
     
     from matplotlib import rc
     from scipy.interpolate import interp1d
-    rc("text", usetex = True)
+    rc("text", usetex = False)
     font = {'size'   : 18}
     rc('font', **font)
 
@@ -86,7 +86,7 @@ def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
             
             plt.xlim(x_min, x_max)
             plt.ylim(y_min, y_max)
-            plt.rc('text', usetex=True)
+            plt.rc('text', usetex=False)
             plt.rc('font', family='serif')
             plt.xlabel(r'$x_1$', fontsize=12)
             plt.ylabel(r'$x_2$', fontsize=12)
@@ -111,7 +111,7 @@ def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
                         [y(_time)[t] for y in interp_y],
                         [z(_time)[t] for z in interp_z],
                         c=color, alpha=alpha, marker = 'o', linewidth=0.65, edgecolors='black')
-            plt.rc('text', usetex=True)
+            plt.rc('text', usetex=False)
             plt.rc('font', family='serif')           
             if t > 0:
                 for i in range(inputs.shape[0]):
@@ -145,7 +145,7 @@ def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
 
 def mnist_gif(model, inputs, timesteps, component, filename='mnist.gif'):
 
-    rc("text", usetex = True)
+    rc("text", usetex = False)
     font = {'size'   : 18}
     rc('font', **font)
     
@@ -158,7 +158,7 @@ def mnist_gif(model, inputs, timesteps, component, filename='mnist.gif'):
 
     ax = plt.gca()
     ax.set_facecolor('whitesmoke')
-    plt.rc('text', usetex=True)
+    plt.rc('text', usetex=False)
     plt.rc('font', family='serif')
     
     pixels = 28       

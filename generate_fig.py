@@ -41,7 +41,7 @@ cross_entropy = True
 
 
 
-num_epochs = 140 #number of optimization epochs for gradient decent
+num_epochs = 5  #was 140 number of optimization epochs for gradient decent
 
 if turnpike:
     weight_decay = 0 if bound>0. else dt*0.01
