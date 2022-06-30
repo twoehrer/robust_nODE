@@ -89,7 +89,7 @@ class Dynamics(nn.Module):
         if self.architecture > 0:
             ##-- R^{d_aug} -> R^{d_hid} layer -- 
             blocks1 = [nn.Linear(self.input_dim, hidden_dim) for _ in range(self.time_steps)]
-            self.fc1_time = nn.Sequential(*blocks1) #this does not represent multiple layers with non-linearities but the different discrete points in time of the weight and bias function.
+            self.fc1_time = nn.Sequential(*blocks1) 
             ##-- R^{d_hid} -> R^{d_aug} layer --
             blocks3 = [nn.Linear(hidden_dim, self.input_dim) for _ in range(self.time_steps)]
             self.fc3_time = nn.Sequential(*blocks3)
