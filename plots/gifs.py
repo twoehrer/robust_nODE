@@ -100,6 +100,8 @@ def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
                     y_traj = interp_y[i](_time)[:t+1]
                     plt.plot(x_traj, y_traj, c=color[i], alpha=alpha_line, linewidth = 0.75, zorder=1)
             
+        
+            
         elif num_dims == 3:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -127,6 +129,7 @@ def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
             plt.rc('grid', linestyle="dotted", color='lightgray')
             ax.grid(True)
             plt.locator_params(nbins=4)
+        ax.set_aspect('equal')
 
         plt.savefig(base_filename + "{}.png".format(t),
                     format='png', dpi=dpi, bbox_inches='tight')

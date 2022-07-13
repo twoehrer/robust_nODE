@@ -8,7 +8,7 @@ import torch.nn as nn
 from numpy import mean
 import torch
 import math
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 
 losses = {'mse': nn.MSELoss(), 
           'cross_entropy': nn.CrossEntropyLoss(), 
