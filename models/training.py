@@ -409,9 +409,9 @@ class doublebackTrainer():
         self.threshold = bound    
         self.fixed_projector = fixed_projector
 
-        self.histories = {'loss_history': [], 'acc_history': [],
+        self.histories = {'loss_history': [], 'loss_rob_history': [],'acc_history': [],
                           'epoch_loss_history': [], 'epoch_acc_history': []}
-        self.buffer = {'loss': [], 'accuracy': []}
+        self.buffer = {'loss': [], 'loss_rob': [], 'accuracy': []}
         self.is_resnet = hasattr(self.model, 'num_layers')
         self.eps = eps
         self.l2_factor = l2_factor
@@ -485,8 +485,8 @@ class doublebackTrainer():
                     adj_term = x_batch_grad.abs().sum() #this corresponds to linfty
                     # adj_term = x_batch_grad.norm() #this corresponds to l2 max
 
-
-                    loss = (1-eps)*loss + eps * adj_term
+                    loss_rob = eps * adj_term
+                    loss = (1-eps)*loss + loss_rob
                     # print(f'{loss=}')
                     # loss = (1-eps) * loss + eps * adj_term #was 0.005 before
             else:                                                       ## Augmented empirical risk minimization
@@ -539,6 +539,9 @@ class doublebackTrainer():
                         print("Loss: {:.3f}".format(self.loss_func(y_pred, y_batch).item()))
                         
             self.buffer['loss'].append(self.loss_func(traj[-1], y_batch).item())
+            # self.buffer['loss_rob'].append
+            
+            
             if not self.fixed_projector and self.cross_entropy:
                 self.buffer['accuracy'].append((softpred == y_batch).sum().item()/(y_batch.size(0)))
 

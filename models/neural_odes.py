@@ -319,7 +319,7 @@ class NeuralODE(nn.Module):
             pred = features
             pred = self.non_linearity(pred)
             self.proj_traj = self.flow.trajectory(x, self.time_steps)
-            self.proj_traj = self.linear_layer(self.proj_traj)
+            # self.proj_traj = self.linear_layer(self.proj_traj)
             
 
         else:
