@@ -306,12 +306,21 @@ class NeuralODE(nn.Module):
         features = self.flow(x)
 
         if self.fixed_projector: #currently fixed_projector = fp
-            import pickle
-            with open('text.txt', 'rb') as fp:
-                projector = pickle.load(fp)
-            pred = features.matmul(projector[-2].t()) + projector[-1]
+            # import pickle
+            # with open('text.txt', 'rb') as fp:
+            #     projector = pickle.load(fp)
+            #     print(projector)
+            
+            # pred = features.matmul(projector[-2].t()) + projector[-1]
+            # pred = self.non_linearity(pred)
+            # self.proj_traj = self.flow.trajectory(x, self.time_steps)
+            # self.proj_traj = self.linear_layer(self.proj_traj)
+            
+            pred = features
             pred = self.non_linearity(pred)
             self.proj_traj = self.flow.trajectory(x, self.time_steps)
+            self.proj_traj = self.linear_layer(self.proj_traj)
+            
 
         else:
             self.traj = self.flow.trajectory(x, self.time_steps)
