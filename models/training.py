@@ -384,11 +384,13 @@ class doublebackTrainer():
     -- The float "bound" indicates whether we consider L1+Linfty reg. problem (bound>0.), or 
     L2 reg. problem (bound=0.). If bound>0., then bound represents the upper threshold for the 
     weights+biases.
+    -- eps: Set a strength for the extra loss term that penalizes the gradients of the original loss
+    -- The float eps_comp records the gradient of the standard loss even when robust training is not active (for comparison). Only to be used with eps = 0
     ***
     """
     def __init__(self, model, optimizer, device, cross_entropy=True,
                  print_freq=10, record_freq=10, verbose=True, save_dir=None, 
-                 turnpike=True, bound=0., fixed_projector=False, eps = 0.01, l2_factor = 0):
+                 turnpike=True, bound=0., fixed_projector=False, eps = 0.01, l2_factor = 0, eps_comp = 0.):
         self.model = model
         self.optimizer = optimizer
         self.cross_entropy = cross_entropy
@@ -414,6 +416,7 @@ class doublebackTrainer():
         self.buffer = {'loss': [], 'loss_rob': [], 'accuracy': []}
         self.is_resnet = hasattr(self.model, 'num_layers')
         self.eps = eps
+        self.eps_comp = eps_comp
         self.l2_factor = l2_factor
         
         # logging_dir='runs/our_experiment'
@@ -432,15 +435,14 @@ class doublebackTrainer():
 
         v_steps = 5
         v = torch.zeros(v_steps,2)
-        eps = self.eps
+        
+        #If eps = 0, we have standard training, if eps_comp is greater 0, we have standard training but record the gradient term as comparison
+        #if eps > 0 we activate robust training and record the gradient term
+        eps_eff = max(self.eps_comp, self.eps)
+        print(eps_eff)
         loss_max = torch.tensor(0.)
 
 
-        
-        # for k in range(v_steps):
-        #     t = k*(2*torch.tensor(math.pi))/v_steps
-        #     v[k] = torch.tensor([torch.sin(t),torch.cos(t)])
-    #generate perturbed directions
         x_batch_grad = torch.tensor(0.)
         
         for i, (x_batch, y_batch) in enumerate(data_loader):
@@ -450,7 +452,7 @@ class doublebackTrainer():
             x_batch = x_batch.to(self.device)
             y_batch = y_batch.to(self.device)
             
-            if eps > -1: #!!!!
+            if eps_eff > 0.: #!!!!
                 x_batch.requires_grad = True #i need this for calculating the gradient term
             
             if not self.is_resnet:
@@ -476,15 +478,17 @@ class doublebackTrainer():
                     l2_regularization = param.norm()
                     loss += self.l2_factor * l2_regularization
             
-                
-            x_batch_grad = torch.autograd.grad(loss, x_batch, create_graph=True, retain_graph=True)[0] #not sure if retrain_graph is necessary here
-            adj_term = x_batch_grad.abs().sum() #this corresponds to linfty
+            if eps_eff > 0.:
+                x_batch_grad = torch.autograd.grad(loss, x_batch, create_graph=True, retain_graph=True)[0] #not sure if retrain_graph is necessary here
+                loss_rob = x_batch_grad.abs().sum() #this corresponds to linfty
+                 # loss_rob = x_batch_grad.norm() #this corresponds to l2 max
+                loss_rob = eps_eff * loss_rob
             
-            # adj_term = x_batch_grad.norm() #this corresponds to l2 max
-            loss_rob = 0.3 * adj_term #!!!
 
-            if eps > 0.:
-                loss = (1-eps)*loss + loss_rob
+            
+
+            if (self.eps > 0.) and (self.eps == eps_eff): #robust loss term is active or is logged + make sure there is no confusing between epsilon of logging and training epsilon
+                loss = (1-self.eps)*loss + loss_rob
                 # print(f'{loss=}')
                 # loss = (1-eps) * loss + eps * adj_term #was 0.005 before
             loss.backward()
