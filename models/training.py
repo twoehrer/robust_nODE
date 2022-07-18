@@ -450,7 +450,7 @@ class doublebackTrainer():
             x_batch = x_batch.to(self.device)
             y_batch = y_batch.to(self.device)
             
-            if eps > 0:
+            if eps > -1: #!!!!
                 x_batch.requires_grad = True #i need this for calculating the gradient term
             
             if not self.is_resnet:
@@ -465,87 +465,63 @@ class doublebackTrainer():
                 T = time_steps
                 dt = 1 
 
-            if not self.turnpike:                                       ## Classical empirical risk minimization
-                loss = self.loss_func(y_pred, y_batch)
-                loss_rob = 0
-                # v = torch.tensor([0,1.])
-                #adding perturbed trajectories
+                                               ## Classical empirical risk minimization
+            loss = self.loss_func(y_pred, y_batch)
+            loss_rob = 0
+            # v = torch.tensor([0,1.])
+            #adding perturbed trajectories
+            
+            if self.l2_factor > 0:
+                for param in self.model.parameters():
+                    l2_regularization = param.norm()
+                    loss += self.l2_factor * l2_regularization
+            
                 
-                if self.l2_factor > 0:
-                    for param in self.model.parameters():
-                        l2_regularization = param.norm()
-                        loss += self.l2_factor * l2_regularization
-                
-                if eps > 0.:
-                    
-                    x_batch_grad = torch.autograd.grad(loss, x_batch, create_graph=True, retain_graph=True)[0] #not sure if retrain_graph is necessary here
-                    
+            x_batch_grad = torch.autograd.grad(loss, x_batch, create_graph=True, retain_graph=True)[0] #not sure if retrain_graph is necessary here
+            adj_term = x_batch_grad.abs().sum() #this corresponds to linfty
+            
+            # adj_term = x_batch_grad.norm() #this corresponds to l2 max
+            loss_rob = 0.3 * adj_term #!!!
 
-                    ##################
-                    
-
-                    adj_term = x_batch_grad.abs().sum() #this corresponds to linfty
-                    # adj_term = x_batch_grad.norm() #this corresponds to l2 max
-
-                    loss_rob = eps * adj_term
-                    loss = (1-eps)*loss + loss_rob
-                    # print(f'{loss=}')
-                    # loss = (1-eps) * loss + eps * adj_term #was 0.005 before
-            else:                                                       ## Augmented empirical risk minimization
-                if self.threshold>0: # l1 controls
-                    l1_regularization = 0.
-                    for param in self.model.parameters():
-                        l1_regularization += param.abs().sum()
-                    ## lambda = 5*1e-3 for spheres+inside
-                    loss = 1.5*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) 
-                                    for k in range(time_steps-1)]) + 0.005*l1_regularization #this was 0.005
-                    
-                else: #l2 controls
-                    if self.fixed_projector: #maybe not needed
-                        xd = torch.tensor([[6.0/0.8156, 0.5/(2*0.4525)] if x==1 else [-6.0/0.8156, -2.0/(2*0.4525)] for x in y_batch])
-                        loss = self.loss_func(y_pred, y_batch.float())+sum([self.loss_func(traj[k], xd)
-                                            +self.loss_func(traj[k+1], xd) for k in range(time_steps-1)])
-                    else:
-                        ## beta=1.5 for point clouds, trapizoidal rule to integrate
-                        beta = 1.75                      
-                        loss = beta*sum([self.loss_func(traj[k], y_batch)+self.loss_func(traj[k+1], y_batch) 
-                                        for k in range(time_steps-1)]) 
+            if eps > 0.:
+                loss = (1-eps)*loss + loss_rob
+                # print(f'{loss=}')
+                # loss = (1-eps) * loss + eps * adj_term #was 0.005 before
             loss.backward()
             self.optimizer.step()
             
         
-            
             
             clipper = WeightClipper(self.threshold)
             if self.threshold>0: 
                 self.model.apply(clipper)       # We apply the Linfty constraint to the trained parameters
             
             if self.cross_entropy:
-                epoch_loss += self.loss_func(traj[-1], y_batch).item()
-                epoch_loss_rob += loss_rob 
+                epoch_loss += loss.item()
+                epoch_loss_rob += loss_rob.item() 
                 m = nn.Softmax(dim = 1)
                 # print(y_pred.size())
                 softpred = m(y_pred)
                 softpred = torch.argmax(softpred, 1)  
                 epoch_acc += (softpred == y_batch).sum().item()/(y_batch.size(0))       
             else:
-                epoch_loss += self.loss_func(y_pred, y_batch).item()
-                epoch_loss_rob += loss_rob 
+                epoch_loss += loss.item()
+                epoch_loss_rob += loss_rob.item()
                 
         
             if i % self.print_freq == 0:
                 if self.verbose:
                     print("\nEpoch {}/{}".format(i, len(data_loader)))
                     if self.cross_entropy:
-                        print("Loss: {:.3f}".format(self.loss_func(traj[-1], y_batch).item()))
+                        print("Loss: {:.3f}".format(loss))
                         print("Robust Term Loss: {:.3f}".format(loss_rob))
                         
                         print("Accuracy: {:.3f}".format((softpred == y_batch).sum().item()/(y_batch.size(0))))
                        
                     else:
-                        print("Loss: {:.3f}".format(self.loss_func(y_pred, y_batch).item()))
+                        print("Loss: {:.3f}".format(loss))
                         
-            self.buffer['loss'].append(self.loss_func(traj[-1], y_batch).item())
+            self.buffer['loss'].append(loss.item())
             self.buffer['loss_rob'].append(loss_rob.item())
             
             
@@ -574,7 +550,6 @@ class doublebackTrainer():
 
         # Record epoch mean information
         self.histories['epoch_loss_history'].append(epoch_loss / len(data_loader))
-        self.histories['epoch_loss_rob_history'].append(epoch_loss / len(data_loader))
         self.histories['epoch_loss_rob_history'].append(epoch_loss_rob / len(data_loader))
         
         # self.histories['ep']
