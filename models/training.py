@@ -410,7 +410,7 @@ class doublebackTrainer():
         self.fixed_projector = fixed_projector
 
         self.histories = {'loss_history': [], 'loss_rob_history': [],'acc_history': [],
-                          'epoch_loss_history': [], 'epoch_acc_history': []}
+                          'epoch_loss_history': [], 'epoch_loss_rob_history': [],  'epoch_acc_history': []}
         self.buffer = {'loss': [], 'loss_rob': [], 'accuracy': []}
         self.is_resnet = hasattr(self.model, 'num_layers')
         self.eps = eps
@@ -427,6 +427,7 @@ class doublebackTrainer():
 
     def _train_epoch(self, data_loader, epoch):
         epoch_loss = 0.
+        epoch_loss_rob = 0.
         epoch_acc = 0.
 
         v_steps = 5
@@ -466,6 +467,7 @@ class doublebackTrainer():
 
             if not self.turnpike:                                       ## Classical empirical risk minimization
                 loss = self.loss_func(y_pred, y_batch)
+                loss_rob = 0
                 # v = torch.tensor([0,1.])
                 #adding perturbed trajectories
                 
@@ -519,7 +521,8 @@ class doublebackTrainer():
                 self.model.apply(clipper)       # We apply the Linfty constraint to the trained parameters
             
             if self.cross_entropy:
-                epoch_loss += self.loss_func(traj[-1], y_batch).item()   
+                epoch_loss += self.loss_func(traj[-1], y_batch).item()
+                epoch_loss_rob += loss_rob 
                 m = nn.Softmax(dim = 1)
                 # print(y_pred.size())
                 softpred = m(y_pred)
@@ -527,19 +530,23 @@ class doublebackTrainer():
                 epoch_acc += (softpred == y_batch).sum().item()/(y_batch.size(0))       
             else:
                 epoch_loss += self.loss_func(y_pred, y_batch).item()
+                epoch_loss_rob += loss_rob 
+                
         
             if i % self.print_freq == 0:
                 if self.verbose:
                     print("\nEpoch {}/{}".format(i, len(data_loader)))
                     if self.cross_entropy:
                         print("Loss: {:.3f}".format(self.loss_func(traj[-1], y_batch).item()))
+                        print("Robust Term Loss: {:.3f}".format(loss_rob))
+                        
                         print("Accuracy: {:.3f}".format((softpred == y_batch).sum().item()/(y_batch.size(0))))
                        
                     else:
                         print("Loss: {:.3f}".format(self.loss_func(y_pred, y_batch).item()))
                         
             self.buffer['loss'].append(self.loss_func(traj[-1], y_batch).item())
-            # self.buffer['loss_rob'].append
+            self.buffer['loss_rob'].append(loss_rob.item())
             
             
             if not self.fixed_projector and self.cross_entropy:
@@ -548,11 +555,13 @@ class doublebackTrainer():
             # At every record_freq iteration, record mean loss and clear buffer
             if self.steps % self.record_freq == 0:
                 self.histories['loss_history'].append(mean(self.buffer['loss']))
+                self.histories['loss_rob_history'].append(mean(self.buffer['loss_rob']))
                 if not self.fixed_projector and self.cross_entropy:
                     self.histories['acc_history'].append(mean(self.buffer['accuracy']))
 
                 # Clear buffer
                 self.buffer['loss'] = []
+                self.buffer['loss_rob'] = []
                 self.buffer['accuracy'] = []
 
                 # Save information in directory
@@ -565,6 +574,10 @@ class doublebackTrainer():
 
         # Record epoch mean information
         self.histories['epoch_loss_history'].append(epoch_loss / len(data_loader))
+        self.histories['epoch_loss_rob_history'].append(epoch_loss / len(data_loader))
+        self.histories['epoch_loss_rob_history'].append(epoch_loss_rob / len(data_loader))
+        
+        # self.histories['ep']
         if not self.fixed_projector:
             self.histories['epoch_acc_history'].append(epoch_acc / len(data_loader))
 
