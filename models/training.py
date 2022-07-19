@@ -469,7 +469,7 @@ class doublebackTrainer():
 
                                                ## Classical empirical risk minimization
             loss = self.loss_func(y_pred, y_batch)
-            loss_rob = 0
+            loss_rob = torch.tensor(0.)
             # v = torch.tensor([0,1.])
             #adding perturbed trajectories
             
@@ -515,7 +515,7 @@ class doublebackTrainer():
         
             if i % self.print_freq == 0:
                 if self.verbose:
-                    print("\nEpoch {}/{}".format(i, len(data_loader)))
+                    print("\nIteration {}/{}".format(i, len(data_loader)))
                     if self.cross_entropy:
                         print("Loss: {:.3f}".format(loss))
                         print("Robust Term Loss: {:.3f}".format(loss_rob))
