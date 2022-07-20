@@ -16,6 +16,7 @@ from matplotlib.colors import to_rgb
 import imageio
 
 from matplotlib.colors import LinearSegmentedColormap
+import os
 
 @torch.no_grad()
 def classification_evolution(model, fig_name=None, footnote=None, contour = True, plotlim = [-2, 2]):
@@ -109,7 +110,7 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
     plt.xlim(0, len(trainer.histories['epoch_loss_history']) - 1)
     # plt.ylim([0,0.75])
     plt.yticks(np.arange(0,1,0.25))
-    plt.grid()
+    plt.grid(zorder = -2)
     ax = plt.gca()
     ax.yaxis.tick_right()
     ax.set_aspect('auto')
@@ -151,7 +152,7 @@ def comparison_plot(fig1, title1, fig2, title2, output_file, figsize = (10,10), 
         plt.close()
         
         
-def train_to_classifier_imgs(model, trainer, dataloader, subfolder, num_epochs, plotfreq, plotlim = [-2, 2]):
+def train_to_classifier_imgs(model, trainer, dataloader, subfolder, num_epochs, plotfreq, filename = '', plotlim = [-2, 2]):
     
     if not os.path.exists(subfolder):
             os.makedirs(subfolder)
@@ -162,4 +163,4 @@ def train_to_classifier_imgs(model, trainer, dataloader, subfolder, num_epochs, 
         print(f'\n{epoch =}')
         trainer.train(dataloader, plotfreq)
         
-        classification_evolution(model, fig_name = fig_name_base + str(epoch), footnote = f'{epoch = }', plotlim = plotlim)
+        classification_evolution(model, fig_name = fig_name_base + filename + str(epoch), footnote = f'{epoch = }', plotlim = plotlim)
