@@ -17,70 +17,7 @@ import matplotlib.pyplot as plt
 from torch.utils import data as data
 from torch.utils.data import DataLoader, TensorDataset
 
-def create_dataloader(data_type, batch_size = 3000, noise = 0.15, factor = 0.15, random_state = 1, shuffle = False, plotlim = [-2, 2]):
-    if data_type == 'circles':
-        X, y = make_circles(batch_size, noise=noise, factor=factor, random_state=random_state, shuffle = shuffle)
-        
-        
-    elif data_type == 'blobs':
-        centers = [[-1, -1], [1, 1]]
-        X, y = make_blobs(
-    n_samples=batch_size, centers=centers, cluster_std=noise, random_state=0)
-        
-        
-    elif data_type == 'moons':
-        X, y = make_moons(batch_size, noise = noise, shuffle = shuffle , random_state = 0)
-    
-    
-    elif data_type == 'xor':
-        X = torch.randint(low=0, high=2, size=(batch_size, 2), dtype=torch.float32)
-        y = np.logical_xor(X[:, 0] > 0, X[:, 1] > 0).float()
-        # y = y.to(torch.int64)
-        X += noise * torch.randn(X.shape)
-        
-        
-    else: 
-        print('datatype not supported')
-        return None, None
 
-    g = torch.Generator()
-    g.manual_seed(random_state)
-    
-    X = StandardScaler().fit_transform(X)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.05 ) #random_state=2, shuffle = shuffle)
-
-    X_train = torch.Tensor(X_train) # transform to torch tensor for dataloader
-    y_train = torch.Tensor(y_train) #transform to torch tensor for dataloader
-
-    X_test = torch.Tensor(X_test) # transform to torch tensor for dataloader
-    y_test = torch.Tensor(y_test) #transform to torch tensor for dataloader
-
-    X_train = X_train.type(torch.float32)  #type of orginial pickle.load data
-    y_train = y_train.type(torch.int64) #dtype of original picle.load data
-
-    X_test = X_test.type(torch.float32)  #type of orginial pickle.load data
-    y_test = y_test.type(torch.int64) #dtype of original picle.load data
-
-
-    train_data = TensorDataset(X_train,y_train) # create your datset
-    test_data = TensorDataset(X_test, y_test)
-
-    train = DataLoader(train_data, batch_size=64, shuffle=shuffle, generator=g)
-    test = DataLoader(test_data, batch_size=256, shuffle=shuffle, generator = g) #128 before
-    
-    data_0 = X_train[y_train == 0]
-    data_1 = X_train[y_train == 1]
-    fig = plt.figure()
-    plt.scatter(data_0[:, 0], data_0[:, 1], edgecolor="#333",  alpha = 0.5) #color = 'crimson',
-    plt.scatter(data_1[:, 0], data_1[:, 1], edgecolor="#333", alpha = 0.5) #color = 'dodgerblue'
-    plt.xlim(plotlim)
-    plt.ylim(plotlim)
-    ax = plt.gca()
-    ax.set_aspect('equal')
-    plt.savefig('trainingset.png', bbox_inches='tight', dpi=300, format='png', facecolor = 'white')
-    plt.show()
-    
-    return train, test
 
 
 
@@ -442,3 +379,67 @@ class doublebackTrainer():
                                              ## Classical empirical risk minimization
                 
 
+def create_dataloader(data_type, batch_size = 3000, noise = 0.15, factor = 0.15, random_state = 1, shuffle = False, plotlim = [-2, 2]):
+    if data_type == 'circles':
+        X, y = make_circles(batch_size, noise=noise, factor=factor, random_state=random_state, shuffle = shuffle)
+        
+        
+    elif data_type == 'blobs':
+        centers = [[-1, -1], [1, 1]]
+        X, y = make_blobs(
+    n_samples=batch_size, centers=centers, cluster_std=noise, random_state=0)
+        
+        
+    elif data_type == 'moons':
+        X, y = make_moons(batch_size, noise = noise, shuffle = shuffle , random_state = 0)
+    
+    
+    elif data_type == 'xor':
+        X = torch.randint(low=0, high=2, size=(batch_size, 2), dtype=torch.float32)
+        y = np.logical_xor(X[:, 0] > 0, X[:, 1] > 0).float()
+        # y = y.to(torch.int64)
+        X += noise * torch.randn(X.shape)
+        
+        
+    else: 
+        print('datatype not supported')
+        return None, None
+
+    g = torch.Generator()
+    g.manual_seed(random_state)
+    
+    X = StandardScaler().fit_transform(X)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.05 ) #random_state=2, shuffle = shuffle)
+
+    X_train = torch.Tensor(X_train) # transform to torch tensor for dataloader
+    y_train = torch.Tensor(y_train) #transform to torch tensor for dataloader
+
+    X_test = torch.Tensor(X_test) # transform to torch tensor for dataloader
+    y_test = torch.Tensor(y_test) #transform to torch tensor for dataloader
+
+    X_train = X_train.type(torch.float32)  #type of orginial pickle.load data
+    y_train = y_train.type(torch.int64) #dtype of original picle.load data
+
+    X_test = X_test.type(torch.float32)  #type of orginial pickle.load data
+    y_test = y_test.type(torch.int64) #dtype of original picle.load data
+
+
+    train_data = TensorDataset(X_train,y_train) # create your datset
+    test_data = TensorDataset(X_test, y_test)
+
+    train = DataLoader(train_data, batch_size=64, shuffle=shuffle, generator=g)
+    test = DataLoader(test_data, batch_size=256, shuffle=shuffle, generator = g) #128 before
+    
+    data_0 = X_train[y_train == 0]
+    data_1 = X_train[y_train == 1]
+    fig = plt.figure()
+    plt.scatter(data_0[:, 0], data_0[:, 1], edgecolor="#333",  alpha = 0.5) #color = 'crimson',
+    plt.scatter(data_1[:, 0], data_1[:, 1], edgecolor="#333", alpha = 0.5) #color = 'dodgerblue'
+    plt.xlim(plotlim)
+    plt.ylim(plotlim)
+    ax = plt.gca()
+    ax.set_aspect('equal')
+    plt.savefig('trainingset.png', bbox_inches='tight', dpi=300, format='png', facecolor = 'white')
+    plt.show()
+    
+    return train, test

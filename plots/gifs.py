@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-@author: borjangeshkovski
+@author: tobias woehrer (adapted from borjangeshkovski)
 """
 ##------------#
 import imageio
@@ -12,7 +12,30 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import rc
 
+from plots.plots import loss_evolution, comparison_plot
 
+'''
+subfolder: collects images from subfolder to create a gif
+num_epochs, plotfreq: Has to fit together with images in subfolder
+gif_name: filename in subfolder
+'''
+def train_evo_gif(trainer, num_epochs, plotfreq, subfolder, filename, title_left = 'levelsets', title_right = 'loss', fps = 1):
+    if not os.path.exists(subfolder):
+        os.makedirs(subfolder)
+    
+    imgs = []
+    filename = os.path.join(subfolder, filename)
+    for epoch in range(0,num_epochs,plotfreq):
+        print(epoch)
+        loss_evolution(trainer, epoch, 'loss_pic')
+        fig1_name = filename + str(epoch) + '.png'
+        comparison_plot(fig1_name, title_left, 'loss_pic.png', title_right , 'comp_run.png', show = False, figsize = (12,4))
+        
+        imgs.append(imageio.imread('comp_run.png'))
+            # if not (num_steps == layer + 1): os.remove(fig_name_rob) #keep last image
+    gif_name = filename + '.gif'
+    imageio.mimwrite(gif_name, imgs, fps = fps)
+    print(gif_name, ' created')
 
 
 def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
