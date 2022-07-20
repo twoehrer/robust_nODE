@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 
 
+
+
 def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
                    alpha_line=1, filename='trajectory.gif'):
     
@@ -145,71 +147,6 @@ def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
         imgs.append(imageio.imread(img_file))
         if i not in [0, interp_time//5, interp_time//2, interp_time-1]: os.remove(img_file) 
     imageio.mimwrite(filename, imgs, fps = 2)
-
-def mnist_gif(model, inputs, timesteps, component, filename='mnist.gif'):
-
-    rc("text", usetex = False)
-    font = {'size'   : 18}
-    rc('font', **font)
-    
-    if not filename.endswith(".gif"):
-        raise RuntimeError("Name must end in with .gif, but ends with {}".format(filename))
-    base_filename = filename[:-4]
-    
-    ends, _, traj = model(inputs)
-    _ = np.asarray(_)
-
-    ax = plt.gca()
-    ax.set_facecolor('whitesmoke')
-    plt.rc('text', usetex=False)
-    plt.rc('font', family='serif')
-    
-    pixels = 28       
-
-    for k in range(timesteps):
-        plt.title(r't={}'.format(k))
-        plt.imsave('mnist{}.png'.format(k), traj[k].detach().numpy()[component].reshape(pixels, pixels), cmap='cividis')
-        plt.imsave('mnist{}.pdf'.format(k), traj[k].detach().numpy()[component].reshape(pixels, pixels), cmap='cividis', format='pdf')
-    
-    imgs = []
-    for i in range(timesteps):
-        img_file = base_filename + "{}.png".format(i)
-        imgs.append(imageio.imread(img_file))
-        os.remove(img_file) 
-    imageio.mimwrite(filename, imgs) 
-
-def cifar_gif(model, inputs, timesteps, component, filename='cifar.gif'):
-
-    rc("text", usetex = True)
-    font = {'size'   : 18}
-    rc('font', **font)
-    
-    if not filename.endswith(".gif"):
-        raise RuntimeError("Name must end in with .gif, but ends with {}".format(filename))
-    base_filename = filename[:-4]
-    
-    ends, _, traj = model(inputs)
-    _ = np.asarray(_)
-
-    ax = plt.gca()
-    #ax.set_facecolor('whitesmoke')
-    plt.rc('text', usetex=True)
-    plt.rc('font', family='serif')
-    
-    pixels = 32      
-    
-    for k in range(timesteps):
-        plt.title(r't={}'.format(k))
-        _ = normalize(traj[k].detach().numpy()[component])
-        plt.imsave('cifar{}.png'.format(k), _.reshape(pixels, pixels, 3))
-        plt.imsave('cifar{}.pdf'.format(k), _.reshape(pixels, pixels, 3), format='pdf')
-    
-    imgs = []
-    for i in range(timesteps):
-        img_file = base_filename + "{}.png".format(i)
-        imgs.append(imageio.imread(img_file))
-        os.remove(img_file) 
-    imageio.mimwrite(filename, imgs) 
 
 def normalize(x):
     """

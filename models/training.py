@@ -282,12 +282,7 @@ class doublebackTrainer():
                 # loss = (1-eps) * loss + eps * adj_term #was 0.005 before
             loss.backward()
             self.optimizer.step()
-            
         
-            
-            clipper = WeightClipper(self.threshold)
-            if self.threshold>0: 
-                self.model.apply(clipper)       # We apply the Linfty constraint to the trained parameters
             
             if self.cross_entropy:
                 epoch_loss += loss.item()
