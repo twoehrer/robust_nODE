@@ -144,7 +144,7 @@ def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
         img_file = base_filename + "{}.png".format(i)
         imgs.append(imageio.imread(img_file))
         if i not in [0, interp_time//5, interp_time//2, interp_time-1]: os.remove(img_file) 
-    imageio.mimwrite(filename, imgs)
+    imageio.mimwrite(filename, imgs, fps = 2)
 
 def mnist_gif(model, inputs, timesteps, component, filename='mnist.gif'):
 
