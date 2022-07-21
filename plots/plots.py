@@ -19,7 +19,7 @@ from matplotlib.colors import LinearSegmentedColormap
 import os
 
 @torch.no_grad()
-def classification_evolution(model, fig_name=None, footnote=None, contour = True, plotlim = [-2, 2]):
+def classification_levelsets(model, fig_name=None, footnote=None, contour = True, plotlim = [-2, 2]):
     
     
     x1lower, x1upper = plotlim
@@ -77,6 +77,7 @@ def classification_evolution(model, fig_name=None, footnote=None, contour = True
         plt.savefig(fig_name + '.png', bbox_inches='tight', dpi=300, format='png', facecolor = 'white')
         plt.clf()
         plt.close()
+    else: plt.show()
         
 def loss_evolution(trainer, epoch, filename = '', figsize = None):
 
@@ -91,7 +92,7 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
         standard_loss_term = [loss - rob for loss, rob in zip(trainer.histories['epoch_loss_history'],trainer.histories['epoch_loss_rob_history'])]
         plt.plot(standard_loss_term,'--', alpha = 0.5)
         leg = plt.legend(['total loss', 'gradient term', 'standard term'], prop= {'size': labelsize})
-    else: leg = plt.legend(['standard loss', '(inaktive) gradient term'], prop= {'size': labelsize})
+    else: leg = plt.legend(['standard loss', '(inactive) gradient term'], prop= {'size': labelsize})
         
     #set alpha to 1
     for lh in leg.legendHandles: 
@@ -163,4 +164,4 @@ def train_to_classifier_imgs(model, trainer, dataloader, subfolder, num_epochs, 
         print(f'\n{epoch =}')
         trainer.train(dataloader, plotfreq)
         
-        classification_evolution(model, fig_name = fig_name_base + filename + str(epoch), footnote = f'{epoch = }', plotlim = plotlim)
+        classification_levelsets(model, fig_name = fig_name_base + filename + str(epoch), footnote = f'{epoch = }', plotlim = plotlim)

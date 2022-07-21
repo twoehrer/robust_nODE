@@ -15,11 +15,13 @@ from matplotlib import rc
 from plots.plots import loss_evolution, comparison_plot
 
 '''
+Creates gif of existing level_set images and creates fittig loss plots to combine both in a subplot
+
 subfolder: collects images from subfolder to create a gif
 num_epochs, plotfreq: Has to fit together with images in subfolder
 gif_name: filename in subfolder
 '''
-def train_evo_gif(trainer, num_epochs, plotfreq, subfolder, filename, title_left = 'levelsets', title_right = 'loss', fps = 1):
+def evo_gif(trainer, num_epochs, plotfreq, subfolder, filename, title_left = 'levelsets', title_right = 'loss', fps = 1):
     if not os.path.exists(subfolder):
         os.makedirs(subfolder)
     
@@ -33,9 +35,11 @@ def train_evo_gif(trainer, num_epochs, plotfreq, subfolder, filename, title_left
         
         imgs.append(imageio.imread('comp_run.png'))
             # if not (num_steps == layer + 1): os.remove(fig_name_rob) #keep last image
-    gif_name = filename + '.gif'
+    gif_name = filename + 'evo.gif'
     imageio.mimwrite(gif_name, imgs, fps = fps)
     print(gif_name, ' created')
+    
+    return gif_name
 
 
 def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
