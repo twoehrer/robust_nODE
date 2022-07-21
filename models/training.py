@@ -231,8 +231,6 @@ class doublebackTrainer():
         epoch_loss_rob = 0.
         epoch_acc = 0.
 
-        v_steps = 5
-        v = torch.zeros(v_steps,2)
         
         #If eps = 0, we have standard training, if eps_comp is greater 0, we have standard training but record the gradient term as comparison
         #if eps > 0 we activate robust training and record the gradient term
@@ -241,7 +239,7 @@ class doublebackTrainer():
         loss_max = torch.tensor(0.)
 
 
-        x_batch_grad = torch.tensor(0.)
+        x_batch_grad = torch.tensor(0.).to(self.device)
         
         for i, (x_batch, y_batch) in enumerate(data_loader):
                 # if i == 0:

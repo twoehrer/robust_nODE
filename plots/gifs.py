@@ -21,7 +21,7 @@ subfolder: collects images from subfolder to create a gif
 num_epochs, plotfreq: Has to fit together with images in subfolder
 gif_name: filename in subfolder
 '''
-def evo_gif(trainer, num_epochs, plotfreq, subfolder, filename, title_left = 'levelsets', title_right = 'loss', fps = 1):
+def evo_gif(trainer, num_epochs, plotfreq, subfolder, filename, title_left = 'levelsets', title_right = 'loss', fps = 1, keep = []):
     if not os.path.exists(subfolder):
         os.makedirs(subfolder)
     
@@ -34,8 +34,9 @@ def evo_gif(trainer, num_epochs, plotfreq, subfolder, filename, title_left = 'le
         fig1_name = filename + str(epoch_trained) + '.png'
         comp_fig_running = filename + '_comp' + '.png'
         comparison_plot(fig1_name, title_left, 'loss_pic.png', title_right , comp_fig_running, show = False, figsize = (12,4))
-        
         imgs.append(imageio.imread(comp_fig_running))
+        if epoch_trained in keep:
+            os.rename(comp_fig_running, filename + str(epoch_trained) + '_comp' + '.png')
             # if not (num_steps == layer + 1): os.remove(fig_name_rob) #keep last image
     gif_name = filename + 'evo.gif'
     imageio.mimwrite(gif_name, imgs, fps = fps)
