@@ -80,17 +80,18 @@ def classification_levelsets(model, fig_name=None, footnote=None, contour = True
     else: plt.show()
         
 def loss_evolution(trainer, epoch, filename = '', figsize = None):
-
+    print(f'{epoch = }')
     fig = plt.figure(dpi = 300, figsize=(figsize))
     labelsize = 10
 
     #plot whole loss history in semi-transparent
-    plt.plot(trainer.histories['epoch_loss_history'], alpha = 0.5)
-    plt.plot(trainer.histories['epoch_loss_rob_history'], '--', zorder = -1, alpha = 0.5)
+    epoch_scale = range(1,len(trainer.histories['epoch_loss_history']) + 1)
+    plt.plot(epoch_scale,trainer.histories['epoch_loss_history'], alpha = 0.5)
+    plt.plot(epoch_scale, trainer.histories['epoch_loss_rob_history'], '--', zorder = -1, alpha = 0.5)
     
     if trainer.eps > 0: #if the trainer has a robustness term
         standard_loss_term = [loss - rob for loss, rob in zip(trainer.histories['epoch_loss_history'],trainer.histories['epoch_loss_rob_history'])]
-        plt.plot(standard_loss_term,'--', alpha = 0.5)
+        plt.plot(epoch_scale, standard_loss_term,'--', alpha = 0.5)
         leg = plt.legend(['total loss', 'gradient term', 'standard term'], prop= {'size': labelsize})
     else: leg = plt.legend(['standard loss', '(inactive) gradient term'], prop= {'size': labelsize})
         
@@ -98,17 +99,17 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
     for lh in leg.legendHandles: 
         lh.set_alpha(1)
 
-    plt.plot(trainer.histories['epoch_loss_history'][0:epoch+1], color = 'C0')
-    plt.scatter(epoch, trainer.histories['epoch_loss_history'][epoch])
+    plt.plot(epoch_scale[0:epoch], trainer.histories['epoch_loss_history'][0:epoch], color = 'C0')
+    plt.scatter(epoch, trainer.histories['epoch_loss_history'][epoch-1])
     
-    plt.plot(trainer.histories['epoch_loss_rob_history'][0:epoch +1], '--', color = 'C1')
-    plt.scatter(epoch, trainer.histories['epoch_loss_rob_history'][epoch], color = 'C1')
+    plt.plot(epoch_scale[0:epoch], trainer.histories['epoch_loss_rob_history'][0:epoch], '--', color = 'C1')
+    plt.scatter(epoch, trainer.histories['epoch_loss_rob_history'][epoch - 1], color = 'C1')
     
     if trainer.eps > 0: #if the trainer has a robustness term
-        plt.plot(standard_loss_term[0:epoch+1],'--', color = 'C2')
-        plt.scatter(epoch, standard_loss_term[epoch], color = 'C2')
+        plt.plot(epoch_scale[0:epoch], standard_loss_term[0:epoch],'--', color = 'C2')
+        plt.scatter(epoch, standard_loss_term[epoch - 1], color = 'C2')
         
-    plt.xlim(0, len(trainer.histories['epoch_loss_history']) - 1)
+    plt.xlim(1, len(trainer.histories['epoch_loss_history']))
     # plt.ylim([0,0.75])
     plt.yticks(np.arange(0,1,0.25))
     plt.grid(zorder = -2)
@@ -161,7 +162,7 @@ def train_to_classifier_imgs(model, trainer, dataloader, subfolder, num_epochs, 
     fig_name_base = os.path.join(subfolder,'') #os independent file path
 
     for epoch in range(0,num_epochs,plotfreq):
-        print(f'\n{epoch =}')
         trainer.train(dataloader, plotfreq)
-        
-        classification_levelsets(model, fig_name = fig_name_base + filename + str(epoch), footnote = f'{epoch = }', plotlim = plotlim)
+        epoch_trained = epoch + plotfreq
+        classification_levelsets(model, fig_name = fig_name_base + filename + str(epoch_trained), footnote = f'epoc = {epoch_trained}', plotlim = plotlim)
+        print(f'\n Plot {epoch_trained =}')

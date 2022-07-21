@@ -5,6 +5,7 @@
 """
 import json
 import torch.nn as nn
+import numpy as np
 from numpy import mean
 import torch
 # from torch.utils.tensorboard import SummaryWriter
@@ -118,11 +119,7 @@ class Trainer():
                                         for k in range(time_steps-1)])
             loss.backward()
             self.optimizer.step()
-            
-            clipper = WeightClipper(self.threshold)
-            if self.threshold>0: 
-                self.model.apply(clipper)       # We apply the Linfty constraint to the trained parameters
-            
+                        
             if self.cross_entropy:
                 epoch_loss += self.loss_func(traj[-1], y_batch).item()   
                 m = nn.Softmax()

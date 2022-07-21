@@ -28,9 +28,10 @@ def evo_gif(trainer, num_epochs, plotfreq, subfolder, filename, title_left = 'le
     imgs = []
     filename = os.path.join(subfolder, filename)
     for epoch in range(0,num_epochs,plotfreq):
-        print(epoch)
-        loss_evolution(trainer, epoch, 'loss_pic')
-        fig1_name = filename + str(epoch) + '.png'
+        epoch_trained = epoch + plotfreq
+        print(epoch_trained)
+        loss_evolution(trainer, epoch_trained, 'loss_pic')
+        fig1_name = filename + str(epoch_trained) + '.png'
         comparison_plot(fig1_name, title_left, 'loss_pic.png', title_right , 'comp_run.png', show = False, figsize = (12,4))
         
         imgs.append(imageio.imread('comp_run.png'))
