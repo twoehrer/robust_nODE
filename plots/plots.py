@@ -86,6 +86,7 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
 
     #plot whole loss history in semi-transparent
     epoch_scale = range(1,len(trainer.histories['epoch_loss_history']) + 1)
+    epoch_scale = list(epoch_scale)
     plt.plot(epoch_scale,trainer.histories['epoch_loss_history'], alpha = 0.5)
     plt.plot(epoch_scale, trainer.histories['epoch_loss_rob_history'], '--', zorder = -1, alpha = 0.5)
     
