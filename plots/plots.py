@@ -117,6 +117,7 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
     ax = plt.gca()
     ax.yaxis.tick_right()
     ax.set_aspect('auto')
+    plt.xlabel('Epochs', size = labelsize)
     if trainer.eps > 0:
         plt.ylabel('Loss Robust', size = labelsize)
         
