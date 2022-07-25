@@ -27,7 +27,7 @@ def classification_levelsets(model, fig_name=None, footnote=None, contour = True
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    fig = plt.figure(figsize=(5, 5), dpi=300)
+    fig = plt.figure(figsize=(5, 5), dpi=100)
     
     plt.ylabel(r"$x_2$")
     plt.xlabel(r"$x_1$")
@@ -81,18 +81,18 @@ def classification_levelsets(model, fig_name=None, footnote=None, contour = True
         
 def loss_evolution(trainer, epoch, filename = '', figsize = None):
     print(f'{epoch = }')
-    fig = plt.figure(dpi = 300, figsize=(figsize))
+    fig = plt.figure(dpi = 100, figsize=(figsize))
     labelsize = 10
 
     #plot whole loss history in semi-transparent
     epoch_scale = range(1,len(trainer.histories['epoch_loss_history']) + 1)
     epoch_scale = list(epoch_scale)
-    plt.plot(epoch_scale,trainer.histories['epoch_loss_history'], alpha = 0.5)
-    plt.plot(epoch_scale, trainer.histories['epoch_loss_rob_history'], '--', zorder = -1, alpha = 0.5)
+    plt.plot(epoch_scale,trainer.histories['epoch_loss_history'], 'k', alpha = 0.5 )
+    plt.plot(epoch_scale, trainer.histories['epoch_loss_rob_history'], 'C2--', zorder = -1, alpha = 0.5)
     
     if trainer.eps > 0: #if the trainer has a robustness term
         standard_loss_term = [loss - rob for loss, rob in zip(trainer.histories['epoch_loss_history'],trainer.histories['epoch_loss_rob_history'])]
-        plt.plot(epoch_scale, standard_loss_term,'--', alpha = 0.5)
+        plt.plot(epoch_scale, standard_loss_term,'C3--', alpha = 0.5)
         leg = plt.legend(['total loss', 'gradient term', 'standard term'], prop= {'size': labelsize})
     else: leg = plt.legend(['standard loss', '(inactive) gradient term'], prop= {'size': labelsize})
         
@@ -100,15 +100,15 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
     for lh in leg.legendHandles: 
         lh.set_alpha(1)
 
-    plt.plot(epoch_scale[0:epoch], trainer.histories['epoch_loss_history'][0:epoch], color = 'C0')
-    plt.scatter(epoch, trainer.histories['epoch_loss_history'][epoch-1])
+    plt.plot(epoch_scale[0:epoch], trainer.histories['epoch_loss_history'][0:epoch], color = 'k')
+    plt.scatter(epoch, trainer.histories['epoch_loss_history'][epoch-1], color = 'k' , zorder = 1)
     
-    plt.plot(epoch_scale[0:epoch], trainer.histories['epoch_loss_rob_history'][0:epoch], '--', color = 'C1')
-    plt.scatter(epoch, trainer.histories['epoch_loss_rob_history'][epoch - 1], color = 'C1')
+    plt.plot(epoch_scale[0:epoch], trainer.histories['epoch_loss_rob_history'][0:epoch], 'C2--')
+    plt.scatter(epoch, trainer.histories['epoch_loss_rob_history'][epoch - 1], color = 'C2', zorder = 1)
     
     if trainer.eps > 0: #if the trainer has a robustness term
-        plt.plot(epoch_scale[0:epoch], standard_loss_term[0:epoch],'--', color = 'C2')
-        plt.scatter(epoch, standard_loss_term[epoch - 1], color = 'C2')
+        plt.plot(epoch_scale[0:epoch], standard_loss_term[0:epoch],'--', color = 'C3')
+        plt.scatter(epoch, standard_loss_term[epoch - 1], color = 'C3', zorder = 1)
         
     plt.xlim(1, len(trainer.histories['epoch_loss_history']))
     # plt.ylim([0,0.75])
@@ -117,6 +117,7 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
     ax = plt.gca()
     ax.yaxis.tick_right()
     ax.set_aspect('auto')
+    ax.set_axisbelow(True)
     plt.xlabel('Epochs', size = labelsize)
     if trainer.eps > 0:
         plt.ylabel('Loss Robust', size = labelsize)
@@ -136,7 +137,7 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
         
 
 def comparison_plot(fig1, title1, fig2, title2, output_file, figsize = (10,10), show = False):
-    plt.figure(dpi = 300, figsize=figsize)
+    plt.figure(dpi = 100, figsize=figsize)
     plt.subplot(121)
     sub1 = imageio.imread(fig1)
     plt.imshow(sub1)
@@ -149,7 +150,8 @@ def comparison_plot(fig1, title1, fig2, title2, output_file, figsize = (10,10), 
     plt.title(title2)
     plt.axis('off')
     plt.tight_layout()
-    plt.savefig(output_file, bbox_inches='tight', dpi=600, format='png', facecolor = 'white')
+    
+    plt.savefig(output_file, bbox_inches='tight', dpi=300, format='png', facecolor = 'white')
     if show: plt.show()
     else:
         plt.gca()
