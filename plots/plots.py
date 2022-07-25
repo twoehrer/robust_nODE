@@ -92,7 +92,7 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
     
     if trainer.eps > 0: #if the trainer has a robustness term
         standard_loss_term = [loss - rob for loss, rob in zip(trainer.histories['epoch_loss_history'],trainer.histories['epoch_loss_rob_history'])]
-        plt.plot(epoch_scale, standard_loss_term,'C3--', alpha = 0.5)
+        plt.plot(epoch_scale, standard_loss_term,'C1--', alpha = 0.5)
         leg = plt.legend(['total loss', 'gradient term', 'standard term'], prop= {'size': labelsize})
     else: leg = plt.legend(['standard loss', '(inactive) gradient term'], prop= {'size': labelsize})
         
@@ -107,8 +107,8 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
     plt.scatter(epoch, trainer.histories['epoch_loss_rob_history'][epoch - 1], color = 'C2', zorder = 1)
     
     if trainer.eps > 0: #if the trainer has a robustness term
-        plt.plot(epoch_scale[0:epoch], standard_loss_term[0:epoch],'--', color = 'C3')
-        plt.scatter(epoch, standard_loss_term[epoch - 1], color = 'C3', zorder = 1)
+        plt.plot(epoch_scale[0:epoch], standard_loss_term[0:epoch],'--', color = 'C1')
+        plt.scatter(epoch, standard_loss_term[epoch - 1], color = 'C1', zorder = 1)
         
     plt.xlim(1, len(trainer.histories['epoch_loss_history']))
     # plt.ylim([0,0.75])
@@ -127,7 +127,7 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
 
 
     if not filename == '':
-        plt.savefig(filename + '.png', bbox_inches='tight', dpi=300, format='png', facecolor = 'white')
+        plt.savefig(filename + '.png', bbox_inches='tight', dpi=100, format='png', facecolor = 'white')
         plt.clf()
         plt.close()
         
@@ -136,7 +136,7 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
         print('no filename given')
         
 
-def comparison_plot(fig1, title1, fig2, title2, output_file, figsize = (10,10), show = False):
+def comparison_plot(fig1, title1, fig2, title2, output_file, figsize = None, show = False):
     plt.figure(dpi = 100, figsize=figsize)
     plt.subplot(121)
     sub1 = imageio.imread(fig1)
@@ -168,5 +168,5 @@ def train_to_classifier_imgs(model, trainer, dataloader, subfolder, num_epochs, 
     for epoch in range(0,num_epochs,plotfreq):
         trainer.train(dataloader, plotfreq)
         epoch_trained = epoch + plotfreq
-        classification_levelsets(model, fig_name = fig_name_base + filename + str(epoch_trained), footnote = f'epoc = {epoch_trained}', plotlim = plotlim)
+        classification_levelsets(model, fig_name = fig_name_base + filename + str(epoch_trained), footnote = f'epoch = {epoch_trained}', plotlim = plotlim)
         print(f'\n Plot {epoch_trained =}')

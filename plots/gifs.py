@@ -33,7 +33,7 @@ def evo_gif(trainer, num_epochs, plotfreq, subfolder, filename, title_left = 'le
         loss_evolution(trainer, epoch_trained, 'loss_pic')
         fig1_name = filename + str(epoch_trained) + '.png'
         comp_fig_running = filename + '_comp' + '.png'
-        comparison_plot(fig1_name, title_left, 'loss_pic.png', title_right , comp_fig_running, show = False, figsize = (12,4))
+        comparison_plot(fig1_name, title_left, 'loss_pic.png', title_right , comp_fig_running, show = False, figsize = (10,5))
         imgs.append(imageio.imread(comp_fig_running))
         if epoch_trained in keep:
             os.rename(comp_fig_running, filename + str(epoch_trained) + '_comp' + '.png')
