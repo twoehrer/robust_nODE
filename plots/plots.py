@@ -18,6 +18,9 @@ import imageio
 from matplotlib.colors import LinearSegmentedColormap
 import os
 
+
+
+
 @torch.no_grad()
 def classification_levelsets(model, fig_name=None, footnote=None, contour = True, plotlim = [-2, 2]):
     
