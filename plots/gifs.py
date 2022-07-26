@@ -36,7 +36,7 @@ def evo_gif(trainer, num_epochs, plotfreq, subfolder, filename, title_left = 'le
         comparison_plot(fig1_name, title_left, 'loss_pic.png', title_right , comp_fig_running, show = False, figsize = (10,5))
         imgs.append(imageio.imread(comp_fig_running))
         if epoch_trained in keep:
-            os.rename(comp_fig_running, filename + str(epoch_trained) + '_comp' + '.png')
+            os.replace(comp_fig_running, filename + str(epoch_trained) + '_comp' + '.png')
             # if not (num_steps == layer + 1): os.remove(fig_name_rob) #keep last image
     gif_name = filename + 'evo.gif'
     imageio.mimwrite(gif_name, imgs, fps = fps)
