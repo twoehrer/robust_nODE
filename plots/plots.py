@@ -114,6 +114,7 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
     # plt.ylim([0,0.75])
     plt.yticks(np.arange(0,1,0.25))
     plt.grid(zorder = -2)
+    plt.tight_layout()
     ax = plt.gca()
     ax.yaxis.tick_right()
     ax.set_aspect('auto')
