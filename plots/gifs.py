@@ -46,7 +46,7 @@ def evo_gif(trainer, num_epochs, plotfreq, subfolder, filename, title_left = 'le
 
 
 def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
-                   alpha_line=1, filename='trajectory.gif'):
+                   alpha_line=1, filename='trajectory.gif', axlim = 0):
     
     from matplotlib import rc
     from scipy.interpolate import interp1d
@@ -63,16 +63,18 @@ def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
         color = ['mediumpurple' if targets[i] == 2.0 else 'gold' if targets[i] == 0.0 else 'mediumseagreen' for i in range(len(targets))]
     else:
         #color = ['crimson' if targets[i, 0] > 0.0 else 'dodgerblue' for i in range(len(targets))]
-        color = ['crimson' if targets[i] > 0.0 else 'dodgerblue' for i in range(len(targets))]
+        color = ['C1' if targets[i] > 0.0 else 'C0' for i in range(len(targets))]
 
     trajectories = model.flow.trajectory(inputs, timesteps).detach()
     num_dims = trajectories.shape[2]
 
-    # x_min, x_max = trajectories[:, :, 0].min(), trajectories[:, :, 0].max()
-    # y_min, y_max = trajectories[:, :, 1].min(), trajectories[:, :, 1].max()
-
-    x_min, x_max = -3, 3  #to normalize for rob and standard nODE
-    y_min, y_max = -3, 3  #
+    if axlim == 0:        
+        x_min, x_max = trajectories[:, :, 0].min(), trajectories[:, :, 0].max()
+        y_min, y_max = trajectories[:, :, 1].min(), trajectories[:, :, 1].max()
+    else: 
+        x_min, x_max = -axlim, axlim  #to normalize for rob and standard nODE
+        y_min, y_max = -axlim, axlim   #
+        
     if num_dims == 3:
         z_min, z_max = trajectories[:, :, 2].min(), trajectories[:, :, 2].max()
     margin = 0.1
@@ -164,7 +166,7 @@ def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
         ax.set_aspect('equal')
 
         plt.savefig(base_filename + "{}.png".format(t),
-                    format='png', dpi=dpi, bbox_inches='tight')
+                    format='png', dpi=dpi, bbox_inches='tight', facecolor = 'white')
         # Save only 3 frames (.pdf for paper)
         # if t in [0, interp_time//5, interp_time//2, interp_time-1]:
         #     plt.savefig(base_filename + "{}.pdf".format(t), format='pdf', bbox_inches='tight')
@@ -177,6 +179,8 @@ def trajectory_gif(model, inputs, targets, timesteps, dpi=200, alpha=0.9,
         imgs.append(imageio.imread(img_file))
         if i not in [0, interp_time//5, interp_time//2, interp_time-1]: os.remove(img_file) 
     imageio.mimwrite(filename, imgs, fps = 2)
+    
+    
 
 def normalize(x):
     """

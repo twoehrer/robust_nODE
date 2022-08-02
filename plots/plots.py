@@ -140,22 +140,22 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
         print('no filename given')
         
 
-def comparison_plot(fig1, title1, fig2, title2, output_file, figsize = None, show = False):
+def comparison_plot(filename1, title1, filename2, title2, filename_output, figsize = None, show = False):
     plt.figure(dpi = 100, figsize=figsize)
     plt.subplot(121)
-    sub1 = imageio.imread(fig1)
+    sub1 = imageio.imread(filename1)
     plt.imshow(sub1)
     plt.title(title1)
     plt.axis('off')
 
     plt.subplot(122)
-    sub2 = imageio.imread(fig2)
+    sub2 = imageio.imread(filename2)
     plt.imshow(sub2)
     plt.title(title2)
     plt.axis('off')
     plt.tight_layout()
     
-    plt.savefig(output_file, bbox_inches='tight', dpi=300, format='png', facecolor = 'white')
+    plt.savefig(filename_output, bbox_inches='tight', dpi=300, format='png', facecolor = 'white')
     if show: plt.show()
     else:
         plt.gca()

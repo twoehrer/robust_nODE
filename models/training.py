@@ -374,7 +374,7 @@ class doublebackTrainer():
                                              ## Classical empirical risk minimization
                 
 
-def create_dataloader(data_type, batch_size = 3000, noise = 0.15, factor = 0.15, random_state = 1, shuffle = False, plotlim = [-2, 2]):
+def create_dataloader(data_type, batch_size = 3000, noise = 0.15, factor = 0.15, random_state = 1, shuffle = True, plotlim = [-2, 2]):
     if data_type == 'circles':
         X, y = make_circles(batch_size, noise=noise, factor=factor, random_state=random_state, shuffle = shuffle)
         
@@ -382,11 +382,11 @@ def create_dataloader(data_type, batch_size = 3000, noise = 0.15, factor = 0.15,
     elif data_type == 'blobs':
         centers = [[-1, -1], [1, 1]]
         X, y = make_blobs(
-    n_samples=batch_size, centers=centers, cluster_std=noise, random_state=0)
+    n_samples=batch_size, centers=centers, cluster_std=noise, random_state=random_state)
         
         
     elif data_type == 'moons':
-        X, y = make_moons(batch_size, noise = noise, shuffle = shuffle , random_state = 0)
+        X, y = make_moons(batch_size, noise = noise, shuffle = shuffle , random_state = random_state)
     
     
     elif data_type == 'xor':
@@ -404,7 +404,7 @@ def create_dataloader(data_type, batch_size = 3000, noise = 0.15, factor = 0.15,
     g.manual_seed(random_state)
     
     X = StandardScaler().fit_transform(X)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.05 ) #random_state=2, shuffle = shuffle)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.05, random_state=random_state, shuffle = shuffle)
 
     X_train = torch.Tensor(X_train) # transform to torch tensor for dataloader
     y_train = torch.Tensor(y_train) #transform to torch tensor for dataloader
