@@ -47,7 +47,7 @@ def visualize_classification(model, data, label, grad = None, fig_name=None, foo
     if not grad == None:
         for i in range(len(data[:, 0])):
             plt.arrow(data[i, 0], data[i, 1], grad[i, 0], grad[i, 1],
-                    head_width=0.05, head_length=0.1, fc='k', ec='k', alpha=0.5)
+                    head_width=0.05, head_length=0.1, fc='k', ec='k', alpha=0.5, length_includes_head = True)
 
    
     model.to(device)
