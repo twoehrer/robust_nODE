@@ -235,7 +235,7 @@ class doublebackTrainer():
         #If eps = 0, we have standard training, if eps_comp is greater 0, we have standard training but record the gradient term as comparison
         #if eps > 0 we activate robust training and record the gradient term
         eps_eff = max(self.eps_comp, self.eps)
-        print(eps_eff)
+        # print(eps_eff)
         loss_max = torch.tensor(0.)
 
 
@@ -636,8 +636,8 @@ def create_dataloader(data_type, batch_size = 3000, noise = 0.15, factor = 0.15,
     data_0 = X_train[y_train == 0]
     data_1 = X_train[y_train == 1]
     fig = plt.figure()
-    plt.scatter(data_0[:, 0], data_0[:, 1], edgecolor="#333",  alpha = 0.5) #color = 'crimson',
-    plt.scatter(data_1[:, 0], data_1[:, 1], edgecolor="#333", alpha = 0.5) #color = 'dodgerblue'
+    plt.scatter(data_0[:, 0], data_0[:, 1], edgecolor="#333",  alpha = 0.5)
+    plt.scatter(data_1[:, 0], data_1[:, 1], edgecolor="#333", alpha = 0.5)
     plt.xlim(plotlim)
     plt.ylim(plotlim)
     ax = plt.gca()

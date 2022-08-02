@@ -20,6 +20,85 @@ import os
 
 
 
+@torch.no_grad()
+def visualize_classification(model, data, label, grad = None, fig_name=None, footnote=None, contour = True, x1lims = [-2, 2], x2lims = [-2, 2]):
+    
+    
+    x1lower, x1upper = x1lims
+    x2lower, x2upper = x2lims
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    if isinstance(data, torch.Tensor):
+        data = data.cpu().numpy()
+    if isinstance(label, torch.Tensor):
+        label = label.cpu().numpy()
+    data_0 = data[label == 0]
+    data_1 = data[label == 1]
+
+    fig = plt.figure(figsize=(5, 5), dpi=300)
+    plt.scatter(data_0[:, 0], data_0[:, 1], edgecolor="#333", label="Class 0", zorder = 1)
+    plt.scatter(data_1[:, 0], data_1[:, 1], edgecolor="#333", label="Class 1", zorder = 1)
+
+    plt.ylabel(r"$x_2$")
+    plt.xlabel(r"$x_1$")
+    plt.figtext(0.5, 0, footnote, ha="center", fontsize=10)
+    # plt.legend()
+    if not grad == None:
+        for i in range(len(data[:, 0])):
+            plt.arrow(data[i, 0], data[i, 1], grad[i, 0], grad[i, 1],
+                    head_width=0.05, head_length=0.1, fc='k', ec='k', alpha=0.5)
+
+   
+    model.to(device)
+    # creates the RGB values of the two scatter plot colors.
+    # c0 = torch.Tensor(to_rgba("C0")).to(device)
+    # c1 = torch.Tensor(to_rgba("C1")).to(device)
+
+    
+
+    x1 = torch.arange(x1lower, x1upper, step=0.01, device=device)
+    x2 = torch.arange(x2lower, x2upper, step=0.01, device=device)
+    xx1, xx2 = torch.meshgrid(x1, x2)  # Meshgrid function as in numpy
+    model_inputs = torch.stack([xx1, xx2], dim=-1)
+    preds, _ = model(model_inputs)
+    # dim = 2 means that it normalizes along the last dimension, i.e. along the two predictions that are the model output
+    m = nn.Softmax(dim=2)
+    # softmax normalizes the model predictions to probabilities
+    preds = m(preds)
+
+    # now we only want to have the probability for being in class1 (as prob for class2 is then 1- class1)
+    preds = preds[:, :, 0]
+    preds = preds.unsqueeze(2)  # adds a tensor dimension at position 2
+    # Specifying "None" in a dimension creates a new one. The rgb values hence get rescaled according to the prediction
+    # output_image = (1 - preds) * c1[None, None] + preds * c0[None, None]
+    # # Convert to numpy array. This only works for tensors on CPU, hence first push to CPU
+    # output_image = output_image.cpu().numpy()
+    # plt.imshow(output_image, origin='lower', extent=(x1lower, x1upper, x2lower, x2upper), zorder = -1)
+    
+    plt.grid(False)
+    plt.xlim([x1lower, x1upper])
+    plt.ylim([x2lower, x2upper])
+    # plt.axis('scaled')
+
+    # labels_predicted = [0 if value <= 0.5 else 1 for value in labels_predicted.numpy()]
+    if contour:
+        colors = [to_rgb("C1"), [1, 1, 1], to_rgb("C0")] # first color is black, last is red
+        cm = LinearSegmentedColormap.from_list(
+            "Custom", colors, N=40)
+        z = np.array(preds).reshape(xx1.shape)
+        
+        plt.contourf(xx1, xx2, z, alpha=1, cmap=cm, zorder = 0, extent=(x1lower, x1upper, x2lower, x2upper)) #plt.get_cmap('coolwarm')
+        
+
+
+
+    # preds_contour = preds.view(len(x1), len(x1)).detach()
+    # plt.contourf(xx1, xx2, preds_contour, alpha=1)
+    if fig_name:
+        plt.savefig(fig_name + '.png', bbox_inches='tight', dpi=300, format='png', facecolor = 'white')
+    return fig
+
 
 @torch.no_grad()
 def classification_levelsets(model, fig_name=None, footnote=None, contour = True, plotlim = [-2, 2]):
