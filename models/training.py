@@ -612,7 +612,7 @@ def create_dataloader(data_type, batch_size = 3000, noise = 0.15, factor = 0.15,
     g.manual_seed(random_state)
     
     X = StandardScaler().fit_transform(X)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.05, random_state=random_state, shuffle = shuffle)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2, random_state=random_state, shuffle = shuffle)
 
     X_train = torch.Tensor(X_train) # transform to torch tensor for dataloader
     y_train = torch.Tensor(y_train) #transform to torch tensor for dataloader
