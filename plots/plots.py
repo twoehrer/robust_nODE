@@ -18,8 +18,6 @@ import imageio
 from matplotlib.colors import LinearSegmentedColormap
 import os
 
-
-
 @torch.no_grad()
 def visualize_classification(model, data, label, grad = None, fig_name=None, footnote=None, contour = True, x1lims = [-2, 2], x2lims = [-2, 2]):
     
@@ -88,8 +86,11 @@ def visualize_classification(model, data, label, grad = None, fig_name=None, foo
             "Custom", colors, N=40)
         z = np.array(preds).reshape(xx1.shape)
         
-        plt.contourf(xx1, xx2, z, alpha=1, cmap=cm, zorder = 0, extent=(x1lower, x1upper, x2lower, x2upper)) #plt.get_cmap('coolwarm')
+        levels = np.linspace(0.,1.,8).tolist()
         
+        cont = plt.contourf(xx1, xx2, z, levels, alpha=1, cmap=cm, zorder = 0, extent=(x1lower, x1upper, x2lower, x2upper)) #plt.get_cmap('coolwarm')
+        cbar = fig.colorbar(cont, fraction=0.046, pad=0.04)
+        cbar.ax.set_ylabel('prediction prob.')
 
 
 
@@ -157,8 +158,6 @@ def classification_levelsets(model, fig_name=None, footnote=None, contour = True
 
     if fig_name:
         plt.savefig(fig_name + '.png', bbox_inches='tight', dpi=300, format='png', facecolor = 'white')
-        plt.clf()
-        plt.close()
     else: plt.show()
         
 def loss_evolution(trainer, epoch, filename = '', figsize = None):
@@ -219,8 +218,8 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
         print('no filename given')
         
 
-def comparison_plot(filename1, title1, filename2, title2, filename_output, figsize = None, show = False):
-    plt.figure(dpi = 100, figsize=figsize)
+def comparison_plot(filename1, title1, filename2, title2, filename_output, figsize = None, show = False, dpi = 100):
+    plt.figure(dpi = dpi, figsize=figsize)
     plt.subplot(121)
     sub1 = imageio.imread(filename1)
     plt.imshow(sub1)
@@ -234,7 +233,7 @@ def comparison_plot(filename1, title1, filename2, title2, filename_output, figsi
     plt.axis('off')
     plt.tight_layout()
     
-    plt.savefig(filename_output, bbox_inches='tight', dpi=300, format='png', facecolor = 'white')
+    plt.savefig(filename_output, bbox_inches='tight', dpi=dpi, format='png', facecolor = 'white')
     if show: plt.show()
     else:
         plt.gca()

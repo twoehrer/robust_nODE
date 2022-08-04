@@ -13,6 +13,9 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 
 from plots.plots import loss_evolution, comparison_plot
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import to_rgb
+
 
 '''
 Creates gif of existing level_set images and creates fittig loss plots to combine both in a subplot
