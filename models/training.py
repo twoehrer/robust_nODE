@@ -276,8 +276,8 @@ class doublebackTrainer():
             
             if eps_eff > 0.:
                 x_batch_grad = torch.autograd.grad(loss, x_batch, create_graph=True, retain_graph=True)[0] #not sure if retrain_graph is necessary here
-                loss_rob = x_batch_grad.abs().sum() #this corresponds to linfty
-                 # loss_rob = x_batch_grad.norm() #this corresponds to l2 max
+                # loss_rob = x_batch_grad.abs().sum() #this corresponds to linfty
+                loss_rob = x_batch_grad.norm() #this corresponds to l2 max 
                 loss_rob = eps_eff * loss_rob
             
 
