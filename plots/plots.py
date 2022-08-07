@@ -34,7 +34,7 @@ def visualize_classification(model, data, label, grad = None, fig_name=None, foo
     data_0 = data[label == 0]
     data_1 = data[label == 1]
 
-    fig = plt.figure(figsize=(5, 5), dpi=300)
+    fig = plt.figure(figsize=(5, 5), dpi=100)
     plt.scatter(data_0[:, 0], data_0[:, 1], edgecolor="#333", label="Class 0", zorder = 1)
     plt.scatter(data_1[:, 0], data_1[:, 1], edgecolor="#333", label="Class 1", zorder = 1)
 

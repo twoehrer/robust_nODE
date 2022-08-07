@@ -278,11 +278,11 @@ class doublebackTrainer():
             if eps_eff > 0.:
                 x_batch_grad = torch.autograd.grad(loss, x_batch, create_graph=True, retain_graph=True)[0] #not sure if retrain_graph is necessary here
                 
-                if self.db_type == 'fgsm':
-                    loss_rob = x_batch_grad.abs().sum() #this corresponds to linfty
+                if self.db_type == 'l1':
+                    loss_rob = x_batch_grad.abs().sum() #this corresponds to linfty defense
                     
                 if self.db_type == 'l2':
-                    loss_rob = x_batch_grad.norm() #this corresponds to l2 max 
+                    loss_rob = x_batch_grad.norm() #this corresponds to l2 defense
                     
                 loss_rob = eps_eff * loss_rob
             
@@ -641,7 +641,7 @@ def create_dataloader(data_type, batch_size = 3000, noise = 0.15, factor = 0.15,
     
     data_0 = X_train[y_train == 0]
     data_1 = X_train[y_train == 1]
-    fig = plt.figure()
+    fig = plt.figure(figsize = (5,5), dpi = 100)
     plt.scatter(data_0[:, 0], data_0[:, 1], edgecolor="#333",  alpha = 0.5)
     plt.scatter(data_1[:, 0], data_1[:, 1], edgecolor="#333", alpha = 0.5)
     plt.xlim(plotlim)
