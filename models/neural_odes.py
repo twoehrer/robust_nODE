@@ -104,7 +104,7 @@ class Dynamics(nn.Module):
         f(x(t), u(t)) = f(x,u^k)
         
         """
-        dt = self.T/(self.time_steps - 1)  #here was no -1 before which does not fit with adjoint solver otherwise
+        dt = self.T/self.time_steps   #here was no -1 before which does not fit with adjoint solver otherwise
         k = int(t/dt)
         
         if self.architecture < 1:

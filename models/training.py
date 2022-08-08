@@ -188,7 +188,7 @@ class doublebackTrainer():
     """
     def __init__(self, model, optimizer, device, cross_entropy=True,
                  print_freq=10, record_freq=10, verbose=True, save_dir=None, 
-                 turnpike=True, bound=0., fixed_projector=False, eps = 0.01, l2_factor = 0, eps_comp = 0., db_type = 'fgsm'):
+                 turnpike=True, bound=0., fixed_projector=False, eps = 0.01, l2_factor = 0, eps_comp = 0., db_type = 'l1'):
         self.model = model
         self.optimizer = optimizer
         self.cross_entropy = cross_entropy
