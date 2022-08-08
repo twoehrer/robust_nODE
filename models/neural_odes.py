@@ -334,7 +334,79 @@ class NeuralODE(nn.Module):
             return features, pred
         return pred, self.proj_traj
 
- 
+class NeuralODEvar(nn.Module):
+    """
+    Returns the flowmap of the neural ODE, i.e. x\mapsto\Phi_T(x), 
+    where \Phi_T(x) might be the solution to the neural ODE, or the
+    solution composed with a projection. 
+    
+    ***
+    - output dim is an int the dimension of the labels.
+    - architecture is a string designating the structure of the dynamics f(x,u)
+    - fixed_projector is a boolean indicating whether the output layer is trained or not
+    ***
+    """
+    def __init__(self, device, data_dim, hidden_dim, output_dim=2,
+                 augment_dim=0, non_linearity='tanh',
+                 tol=1e-3, adjoint=False, architecture='inside', 
+                 T=10, time_steps=10, num_params = 5,
+                 cross_entropy=True, fixed_projector=False):
+        super(NeuralODEvar, self).__init__()
+        self.device = device
+        self.data_dim = data_dim
+        self.hidden_dim = hidden_dim
+        self.augment_dim = augment_dim
+        if output_dim == 1 and cross_entropy: 
+            #output_dim = 1 pour MSE; >=2 pour cross entropy for binary classification.
+            raise ValueError('Incompatible output dimension with loss function.')
+        self.output_dim = output_dim
+        self.tol = tol
+        self.T = T
+        self.time_steps = time_steps
+        self.num_params = num_params #this should describe the amount of piecewise constant parameters exist. i.e. T/num_params 
+        self.architecture = architecture
+        self.cross_entropy = cross_entropy
+        self.fixed_projector = fixed_projector
+
+        dynamics = Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.num_params)
+        
+        self.flow = Semiflow(device, dynamics, tol, adjoint, T,  time_steps) #, self.adj_flow
+        self.linear_layer = nn.Linear(self.flow.dynamics.input_dim,
+                                         self.output_dim)
+        self.non_linearity = nn.Tanh() #not really sure why this is here
+        
+    def forward(self, x, return_features=False):
+        
+        features = self.flow(x)
+
+        if self.fixed_projector: #currently fixed_projector = fp
+            # import pickle
+            # with open('text.txt', 'rb') as fp:
+            #     projector = pickle.load(fp)
+            #     print(projector)
+            
+            # pred = features.matmul(projector[-2].t()) + projector[-1]
+            # pred = self.non_linearity(pred)
+            # self.proj_traj = self.flow.trajectory(x, self.time_steps)
+            # self.proj_traj = self.linear_layer(self.proj_traj)
+            
+            pred = features
+            pred = self.non_linearity(pred)
+            self.proj_traj = self.flow.trajectory(x, self.time_steps)
+            # self.proj_traj = self.linear_layer(self.proj_traj)
+            
+
+        else:
+            self.traj = self.flow.trajectory(x, self.time_steps)
+            pred = self.linear_layer(features)
+            self.proj_traj = self.linear_layer(self.traj)
+            if not self.cross_entropy:
+                pred = self.non_linearity(pred)
+                self.proj_traj = self.non_linearity(self.proj_traj)
+        
+        if return_features:
+            return features, pred
+        return pred, self.proj_traj
         
 
 class robNeuralODE(nn.Module):
