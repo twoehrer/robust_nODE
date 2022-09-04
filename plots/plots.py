@@ -162,7 +162,7 @@ def classification_levelsets(model, fig_name=None, footnote=None, contour = True
         plt.close()
     else: plt.show()
         
-def loss_evolution(trainer, epoch, filename = '', figsize = None):
+def loss_evolution(trainer, epoch, filename = '', figsize = None, footnote = None):
     print(f'{epoch = }')
     fig = plt.figure(dpi = 100, figsize=(figsize))
     labelsize = 10
@@ -197,7 +197,7 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
     # plt.ylim([0,0.75])
     plt.yticks(np.arange(0,1,0.25))
     plt.grid(zorder = -2)
-    plt.tight_layout()
+    # plt.tight_layout()
     ax = plt.gca()
     ax.yaxis.tick_right()
     ax.set_aspect('auto')
@@ -209,6 +209,8 @@ def loss_evolution(trainer, epoch, filename = '', figsize = None):
     else:
         plt.ylabel('Loss Standard', size = labelsize)
 
+    if footnote:
+        plt.figtext(0.5, -0.005, footnote, ha="center", fontsize=9)
 
     if not filename == '':
         plt.savefig(filename + '.png', bbox_inches='tight', dpi=100, format='png', facecolor = 'white')
