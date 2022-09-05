@@ -249,6 +249,8 @@ class doublebackTrainer():
             x_batch = x_batch.to(self.device)
             y_batch = y_batch.to(self.device)
             
+            
+            
             if eps_eff > 0.: #!!!!
                 x_batch.requires_grad = True #i need this for calculating the gradient term
             
