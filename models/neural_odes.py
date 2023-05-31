@@ -138,7 +138,7 @@ class Dynamics_reduced(nn.Module):
     """
     def __init__(self, device, data_dim, hidden_dim, augment_dim=0, 
                 non_linearity='tanh', architecture='inside', T=10, time_steps=10):
-        super(Dynamics, self).__init__()
+        super(Dynamics_reduced, self).__init__()
         self.device = device
         self.augment_dim = augment_dim
         self.data_dim = data_dim
@@ -168,8 +168,8 @@ class Dynamics_reduced(nn.Module):
         bias_k = self.bias[k]
         outer_weights_k = self.outer_weights[k]
         
-        inner_product = torch.matmul(weights_k, x) + bias_k
-        layer_output = torch.matmul(outer_weights_k, self.non_linearity(inner_product))
+        inner_product = torch.matmul(x, weights_k.t()) + bias_k
+        layer_output = torch.matmul(self.non_linearity(inner_product), outer_weights_k.t())
 
         return layer_output
 
