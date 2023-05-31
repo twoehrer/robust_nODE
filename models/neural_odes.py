@@ -132,6 +132,46 @@ class Dynamics(nn.Module):
         return out
 
 
+class Dynamics_reduced(nn.Module):
+    """
+    The nonlinear, right hand side $f(u(t), x(t)) of the neural ODE.
+    """
+    def __init__(self, device, data_dim, hidden_dim, augment_dim=0, 
+                non_linearity='tanh', architecture='inside', T=10, time_steps=10):
+        super(Dynamics, self).__init__()
+        self.device = device
+        self.augment_dim = augment_dim
+        self.data_dim = data_dim
+        self.input_dim = data_dim + augment_dim
+        self.hidden_dim = hidden_dim
+
+        if non_linearity not in activations.keys() or architecture not in architectures.keys():
+            raise ValueError("Activation function or architecture not found. Please reconsider.")
+        
+        self.non_linearity = activations[non_linearity]
+        self.architecture = architectures[architecture]
+        self.T = T
+        self.time_steps = time_steps
+        
+        self.weights = nn.ParameterList([nn.Parameter(torch.randn(self.hidden_dim, self.input_dim)) for _ in range(self.time_steps)])
+        self.bias = nn.ParameterList([nn.Parameter(torch.randn(self.hidden_dim)) for _ in range(self.time_steps)])
+        self.outer_weights = nn.ParameterList([nn.Parameter(torch.randn(self.hidden_dim, self.input_dim)) for _ in range(self.time_steps)])
+    
+    def forward(self, t, x):
+        """
+        The output of the class -> f(x(t), u(t)).
+        """
+        dt = self.T/self.time_steps
+        k = int(t/dt)
+        
+        weights_k = self.weights[k]
+        bias_k = self.bias[k]
+        outer_weights_k = self.outer_weights[k]
+        
+        inner_product = torch.matmul(weights_k, x) + bias_k
+        layer_output = torch.matmul(outer_weights_k, self.non_linearity(inner_product))
+
+        return layer_output
 
 
 
@@ -277,7 +317,7 @@ class NeuralODE(nn.Module):
                  augment_dim=0, non_linearity='tanh',
                  tol=1e-3, adjoint=False, architecture='inside', 
                  T=10, time_steps=10, 
-                 cross_entropy=True, fixed_projector=False):
+                 cross_entropy=True, fixed_projector=False, reduced_dynamics = False):
         super(NeuralODE, self).__init__()
         self.device = device
         self.data_dim = data_dim
@@ -293,8 +333,10 @@ class NeuralODE(nn.Module):
         self.architecture = architecture
         self.cross_entropy = cross_entropy
         self.fixed_projector = fixed_projector
-
-        dynamics = Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps)
+        if reduced_dynamics:
+            dynamics = Dynamics_reduced(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps)
+        else:
+            dynamics = Dynamics(device, data_dim, hidden_dim, augment_dim, non_linearity, architecture, self.T, self.time_steps)
         
         self.flow = Semiflow(device, dynamics, tol, adjoint, T,  time_steps) #, self.adj_flow
         self.linear_layer = nn.Linear(self.flow.dynamics.input_dim,
