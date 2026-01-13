@@ -6,7 +6,7 @@ Various jupyter notebooks are included that generate plots comparing standard to
 
 A good starting point is robustness_plots.ipynb
 
-<img src="./attacks_readme.png" width="60%" height="60%" >
+<img src="./attacks_readme.png" width="80%" height="80%" >
 
 Code is based on https://github.com/borjanG/2021-dynamical-systems
 that uses the torchdiffeq package https://github.com/rtqichen/torchdiffeq
